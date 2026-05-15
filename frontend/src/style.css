@@ -1,0 +1,193 @@
+:root {
+  --primary: #4f46e5;
+  --primary-light: #6366f1;
+  --primary-dark: #3730a3;
+  --cyan: #06b6d4;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --ai: #8b5cf6;
+  --bg: #f8fafc;
+  --bg-dark: #f1f5f9;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --sidebar-bg: linear-gradient(180deg, #15174b 0%, #0f123c 100%);
+  --sidebar-text: #c7d2fe;
+  --shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+  --radius: 10px;
+  font-family:
+    'PingFang SC',
+    'Microsoft YaHei',
+    'Helvetica Neue',
+    Helvetica,
+    Arial,
+    sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+}
+
+body {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.page-shell {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(79, 70, 229, 0.08), transparent 24%),
+    radial-gradient(circle at top right, rgba(6, 182, 212, 0.08), transparent 20%),
+    var(--bg);
+}
+
+.teamflow-card {
+  background: var(--card);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.section-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.section-subtitle {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-tag.blue {
+  color: var(--primary);
+  background: rgba(79, 70, 229, 0.12);
+}
+
+.status-tag.green {
+  color: var(--success);
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.status-tag.orange {
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.status-tag.red {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.status-tag.purple {
+  color: var(--ai);
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.tiny-muted {
+  color: var(--text-light);
+  font-size: 12px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.page-desc {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.grid-4 {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid-3 {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid-2 {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.action-link {
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.app-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.app-scroll::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.24);
+  border-radius: 999px;
+}
+
+.chart-shell {
+  width: 100%;
+  min-height: 220px;
+}
+
+.el-button--primary {
+  background: linear-gradient(135deg, #4f6cf3 0%, #2563eb 100%);
+  border-color: transparent;
+}
+
+.el-table {
+  --el-table-header-bg-color: transparent;
+  --el-table-border-color: #eef2ff;
+}
