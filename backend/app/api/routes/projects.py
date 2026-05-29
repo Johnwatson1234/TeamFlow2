@@ -8,7 +8,6 @@ from app.api.deps import ensure_project_member, get_current_user
 from app.db.session import get_db
 from app.models.entities import (
     CollaborationEvent,
-    ContributionScore,
     Notification,
     Project,
     ProjectInvitation,
@@ -16,13 +15,13 @@ from app.models.entities import (
     RiskAlert,
     User,
 )
+from app.services.member_insights import build_contribution_payload, get_cached_contribution_payload
 from app.services.presenters import (
     build_dashboard_payload,
     build_git_payload,
     build_graph_payload,
     build_reminder_payload,
     build_user_map,
-    serialize_contribution,
     serialize_invitation,
     serialize_member,
     serialize_project,
@@ -289,26 +288,18 @@ def graph(project_id: int, db: Session = Depends(get_db), current_user: User = D
 @router.get("/{project_id}/contribution")
 def contribution(project_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     ensure_project_member(project_id, current_user.id, db)
-    users = build_user_map(db)
-    scores = db.query(ContributionScore).filter(ContributionScore.project_id == project_id).order_by(ContributionScore.total_score.desc()).all()
-    from app.models.entities import ContributionEvidence
-    from app.services.presenters import serialize_evidence
-
-    evidence = db.query(ContributionEvidence).filter(ContributionEvidence.project_id == project_id).order_by(ContributionEvidence.created_at.desc()).all()
-    return {
-        "ranking": [serialize_contribution(item, users) for item in scores],
-        "evidence": [serialize_evidence(item, users) for item in evidence],
-    }
+    cached = get_cached_contribution_payload(db, project_id)
+    if cached:
+        return cached
+    return build_contribution_payload(db, project_id, prefer_llm=False, persist=False)
 
 
 @router.post("/{project_id}/contribution/recalculate")
 def recalc_contribution(project_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     ensure_project_member(project_id, current_user.id, db)
-    rows = db.query(ContributionScore).filter(ContributionScore.project_id == project_id).all()
-    for index, row in enumerate(rows):
-        row.total_score = round(row.total_score + (0.5 if index % 2 == 0 else 0.3), 1)
+    payload = build_contribution_payload(db, project_id, prefer_llm=True, persist=True)
     db.commit()
-    return {"message": "贡献分已刷新"}
+    return payload
 
 
 @router.get("/{project_id}/risk-alerts")

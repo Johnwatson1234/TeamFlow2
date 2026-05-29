@@ -1,5 +1,18 @@
 <template>
   <div class="messages-page" v-loading="loading">
+    <div class="teamflow-card ai-insight-banner">
+      <div>
+        <div class="section-title">讨论内容已接入成员画像分析</div>
+        <div class="section-subtitle">
+          系统会根据成员在消息中的想法、任务引用、协作表达和完成情况，生成性格画像与岗位推荐。
+        </div>
+      </div>
+      <div class="banner-actions">
+        <el-button @click="router.push(`/projects/${projectId}/contribution`)">查看贡献分析</el-button>
+        <el-button type="primary" @click="router.push(`/projects/${projectId}/career`)">查看成员画像</el-button>
+      </div>
+    </div>
+
     <aside class="teamflow-card conversation-pane">
       <div class="pane-header">
         <h2 class="section-title">会话列表</h2>
@@ -422,6 +435,18 @@ onMounted(load)
   grid-template-columns: 340px 1fr 320px;
 }
 
+.ai-insight-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  grid-column: 1 / -1;
+  padding: 18px;
+  background:
+    radial-gradient(circle at top right, rgba(79, 70, 229, 0.16), transparent 28%),
+    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
 .conversation-pane,
 .thread-pane,
 .context-pane {
@@ -442,7 +467,8 @@ onMounted(load)
 }
 
 .thread-header-actions,
-.task-reference-bar {
+.task-reference-bar,
+.banner-actions {
   display: flex;
   gap: 10px;
   align-items: center;

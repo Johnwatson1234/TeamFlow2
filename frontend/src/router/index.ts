@@ -39,6 +39,7 @@ const router = createRouter({
         { path: 'files', name: 'files', component: () => import('@/views/project/FilesView.vue') },
         { path: 'graph', name: 'graph', component: () => import('@/views/project/GraphView.vue') },
         { path: 'contribution', name: 'contribution', component: () => import('@/views/project/ContributionView.vue') },
+        { path: 'career', name: 'career', component: () => import('@/views/project/CareerInsightsView.vue') },
         { path: 'risk', name: 'risk', component: () => import('@/views/project/RiskView.vue') },
         { path: 'git', name: 'git', component: () => import('@/views/project/GitView.vue') },
         { path: 'ai', name: 'ai', component: () => import('@/views/project/AIView.vue') },

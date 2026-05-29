@@ -6,6 +6,7 @@
         <div class="page-desc">数据更新时间：{{ projectStore.currentProject?.updated_at }}</div>
       </div>
       <div class="header-actions">
+        <el-button @click="goCareer">成员画像</el-button>
         <el-button @click="refreshContribution">刷新贡献分</el-button>
         <el-button type="primary" @click="scanRisk">扫描风险</el-button>
       </div>
@@ -109,7 +110,7 @@
 import { Bell, Clock, Connection, DocumentChecked, Files, Message, PieChart, UserFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { projectApi } from '@/api'
 import LineChart from '@/components/common/LineChart.vue'
@@ -118,6 +119,7 @@ import StatCard from '@/components/common/StatCard.vue'
 import { useProjectStore } from '@/stores/project'
 
 const route = useRoute()
+const router = useRouter()
 const projectStore = useProjectStore()
 const projectId = computed(() => route.params.id as string)
 const dashboard = computed(() => projectStore.dashboard)
@@ -132,6 +134,9 @@ const refreshContribution = async () => {
   await projectApi.recalculateContribution(projectId.value)
   ElMessage.success('贡献分已刷新')
   await load()
+}
+const goCareer = async () => {
+  await router.push(`/projects/${projectId.value}/career`)
 }
 
 onMounted(load)

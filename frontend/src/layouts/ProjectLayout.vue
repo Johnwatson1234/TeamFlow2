@@ -105,6 +105,7 @@
 
 <script setup lang="ts">
 import {
+  Avatar,
   Bell,
   ChatDotRound,
   Connection,
@@ -149,6 +150,7 @@ const navItems = computed(() => [
   { name: 'git', label: 'Git 协作', icon: Connection, to: `/projects/${projectId.value}/git` },
   { name: 'graph', label: '协作图谱', icon: Share, to: `/projects/${projectId.value}/graph` },
   { name: 'contribution', label: '贡献分析', icon: DataAnalysis, to: `/projects/${projectId.value}/contribution` },
+  { name: 'career', label: '成员画像', icon: Avatar, to: `/projects/${projectId.value}/career` },
   { name: 'risk', label: '风险预警', icon: Warning, to: `/projects/${projectId.value}/risk` },
   { name: 'audit', label: '过程审计', icon: Monitor, to: `/projects/${projectId.value}/audit` },
   { name: 'ai', label: 'AI 助手', icon: SetUp, to: `/projects/${projectId.value}/ai` },
