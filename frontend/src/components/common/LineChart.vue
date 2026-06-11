@@ -13,36 +13,73 @@ const props = defineProps<{
 const chartRef = ref<HTMLDivElement>()
 let chart: echarts.ECharts | null = null
 
+const cssVar = (name: string, fallback: string) => {
+  if (typeof window === 'undefined') return fallback
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+}
+
 const render = () => {
   if (!chartRef.value) return
   if (!chart) chart = echarts.init(chartRef.value)
+  const axis = cssVar('--chart-axis', '#6b7c93')
+  const axisLight = cssVar('--chart-axis-light', '#93a4b8')
+  const grid = cssVar('--chart-grid', '#dbe7f3')
+  const lineStart = cssVar('--chart-line-1', '#0f9d8a')
+  const lineEnd = cssVar('--chart-line-2', '#2563eb')
+  const fillStart = cssVar('--chart-fill-1', 'rgba(15, 157, 138, 0.24)')
+  const fillEnd = cssVar('--chart-fill-2', 'rgba(37, 99, 235, 0.04)')
   chart.setOption({
-    grid: { left: 24, right: 20, top: 36, bottom: 24 },
-    tooltip: { trigger: 'axis' },
+    grid: { left: 22, right: 18, top: 34, bottom: 20 },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(15, 23, 42, 0.92)',
+      borderWidth: 0,
+      textStyle: { color: '#f8fafc' },
+      axisPointer: {
+        type: 'line',
+        lineStyle: { color: 'rgba(37, 99, 235, 0.26)', width: 1.5 },
+      },
+    },
     xAxis: {
       type: 'category',
       data: props.series.map((item) => item.date),
       boundaryGap: false,
-      axisLine: { lineStyle: { color: '#d9e0f0' } },
-      axisLabel: { color: '#64748b' },
+      axisTick: { show: false },
+      axisLine: { lineStyle: { color: grid } },
+      axisLabel: { color: axis, margin: 12 },
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: '#eef2ff' } },
-      axisLabel: { color: '#94a3b8' },
+      splitLine: { lineStyle: { color: grid, type: 'dashed' } },
+      axisLabel: { color: axisLight },
     },
     series: [
       {
         data: props.series.map((item) => item.value),
         type: 'line',
         smooth: true,
-        symbolSize: 8,
-        itemStyle: { color: '#2563eb' },
-        lineStyle: { width: 3, color: '#2563eb' },
+        symbol: 'circle',
+        symbolSize: 9,
+        showSymbol: false,
+        emphasis: { focus: 'series', scale: true },
+        itemStyle: {
+          color: lineEnd,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+        },
+        lineStyle: {
+          width: 4,
+          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+            { offset: 0, color: lineStart },
+            { offset: 1, color: lineEnd },
+          ]),
+          shadowBlur: 12,
+          shadowColor: 'rgba(37, 99, 235, 0.18)',
+        },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(37, 99, 235, 0.16)' },
-            { offset: 1, color: 'rgba(37, 99, 235, 0.02)' },
+            { offset: 0, color: fillStart },
+            { offset: 1, color: fillEnd },
           ]),
         },
       },

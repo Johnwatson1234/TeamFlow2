@@ -57,7 +57,16 @@
           <el-table-column label="修改次数" prop="changes" width="100" />
           <el-table-column label="增删行数" prop="lines" width="140" />
           <el-table-column label="参与人数" prop="participants" width="100" />
-          <el-table-column label="热点指数" prop="heat" width="100" />
+          <el-table-column label="热点指数" width="180">
+            <template #default="{ row }">
+              <div class="heat-cell">
+                <div class="heat-bar">
+                  <div class="heat-fill" :style="{ width: `${row.heat}%`, background: heatGradient(row.heat) }"></div>
+                </div>
+                <strong :style="{ color: heatTextColor(row.heat) }">{{ row.heat }}</strong>
+              </div>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
       <div class="teamflow-card panel">
@@ -87,6 +96,20 @@ const payload = ref<any>(null)
 const load = async () => {
   const { data } = await projectApi.git(projectId.value)
   payload.value = data
+}
+
+const heatGradient = (heat: number) => {
+  if (heat >= 80) return 'linear-gradient(90deg, #f97316 0%, #ef4444 100%)'
+  if (heat >= 60) return 'linear-gradient(90deg, #f59e0b 0%, #f97316 100%)'
+  if (heat >= 40) return 'linear-gradient(90deg, #14b8a6 0%, #0ea5e9 100%)'
+  return 'linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%)'
+}
+
+const heatTextColor = (heat: number) => {
+  if (heat >= 80) return '#dc2626'
+  if (heat >= 60) return '#ea580c'
+  if (heat >= 40) return '#0f766e'
+  return '#4f46e5'
 }
 
 onMounted(load)
@@ -149,5 +172,54 @@ onMounted(load)
 
 .repo-item label {
   color: var(--text-muted);
+}
+
+.heat-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.heat-bar {
+  position: relative;
+  width: 100px;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #edf4fa 0%, #e2ebf5 100%);
+}
+
+.heat-fill {
+  height: 100%;
+  border-radius: inherit;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.14);
+}
+
+@media (max-width: 1200px) {
+  .git-grid,
+  .git-bottom {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .git-grid > :first-child,
+  .git-bottom > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .git-grid,
+  .git-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .commit-item,
+  .branch-row,
+  .conflict-item,
+  .repo-item {
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
 }
 </style>

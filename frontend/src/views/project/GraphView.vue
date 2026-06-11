@@ -129,4 +129,21 @@ onMounted(load)
 .evidence-row {
   margin-top: 14px;
 }
+
+@media (max-width: 1200px) {
+  .graph-page,
+  .graph-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .rank-row {
+    grid-template-columns: 20px 30px 1fr;
+  }
+
+  .rank-row :deep(.el-progress) {
+    grid-column: 1 / -1;
+  }
+}
 </style>

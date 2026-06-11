@@ -105,7 +105,7 @@ const submit = async () => {
 
 <style scoped>
 .auth-shell {
-  height: 100%;
+  min-height: 100dvh;
   padding: 32px 52px 20px;
   background:
     radial-gradient(circle at 20% 24%, rgba(79, 70, 229, 0.1), transparent 25%),
@@ -282,5 +282,86 @@ const submit = async () => {
   margin-top: 32px;
   color: var(--text-muted);
   text-align: center;
+}
+
+@media (max-width: 1200px) {
+  .auth-shell {
+    padding: 24px 28px 18px;
+  }
+
+  .auth-hero {
+    gap: 28px;
+    grid-template-columns: 1fr;
+  }
+
+  .hero-left h1 {
+    font-size: 56px;
+  }
+
+  .hero-left h2 {
+    font-size: 38px;
+  }
+
+  .hero-left p {
+    font-size: 20px;
+  }
+
+  .feature-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-shell {
+    padding: 18px 16px 20px;
+  }
+
+  .brand-header {
+    flex-wrap: wrap;
+  }
+
+  .brand-lang {
+    margin-left: 0;
+  }
+
+  .auth-hero {
+    gap: 22px;
+  }
+
+  .hero-left h1 {
+    font-size: 40px;
+  }
+
+  .hero-left h2 {
+    font-size: 28px;
+  }
+
+  .hero-left p {
+    font-size: 16px;
+  }
+
+  .hero-visual {
+    margin-top: 24px;
+    padding: 12px;
+  }
+
+  .hero-illustration {
+    height: 240px;
+    border-radius: 20px;
+  }
+
+  .feature-list {
+    gap: 14px;
+    margin-top: 28px;
+    grid-template-columns: 1fr;
+  }
+
+  .auth-panel {
+    padding: 28px 18px 22px;
+  }
+
+  .panel-title {
+    font-size: 30px;
+  }
 }
 </style>

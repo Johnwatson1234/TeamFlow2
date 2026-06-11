@@ -202,4 +202,35 @@ onMounted(load)
   border: 1px solid #eef2ff;
   border-radius: 14px;
 }
+
+@media (max-width: 1200px) {
+  .editor-page {
+    height: auto;
+    grid-template-columns: 220px 1fr;
+  }
+
+  .side-pane {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .editor-page {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-head,
+  .editor-actions,
+  .editor-footer,
+  .version-top {
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
 </style>

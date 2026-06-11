@@ -4,14 +4,19 @@
       <div class="teamflow-card ai-chat">
         <div class="thread-title">TeamFlow AI 助手</div>
         <div class="page-desc">你好，我是你的 AI 项目经理。我可以帮你进行任务拆解与规划、制定进度计划、风险识别与建议、生成项目报告。</div>
-        <div class="chat-bubbles">
-          <div class="bubble assistant">请帮我为 {{ projectStore.currentProject?.name }} 制定详细的任务规划，并给出里程碑建议和风险提示。</div>
-          <div class="bubble user">{{ prompt }}</div>
+        <div class="chat-bubbles app-scroll" style="max-height: 400px; overflow-y: auto;">
+          <div class="bubble assistant">请帮我为 {{ projectStore.currentProject?.name || '当前项目' }} 制定详细的任务规划，并给出里程碑建议和风险提示。</div>
+          <div v-for="(msg, idx) in chatHistory" :key="idx" :class="['bubble', msg.role]">
+            {{ msg.content }}
+          </div>
+          <div class="bubble assistant typing" v-if="isGenerating">
+            <span></span><span></span><span></span>
+          </div>
         </div>
-        <el-input v-model="prompt" :rows="4" type="textarea" />
-        <div class="editor-actions">
-          <div class="tiny-muted">AI 生成内容仅供参考，请结合实际情况判断</div>
-          <el-button type="primary" @click="generate">发送</el-button>
+        <el-input v-model="prompt" :rows="4" type="textarea" placeholder="输入你想让 AI 协助的内容..." @keyup.enter.ctrl="generate" />
+        <div class="editor-actions" style="margin-top: 12px;">
+          <div class="tiny-muted">AI 生成内容仅供参考，请结合实际情况判断 (Ctrl+Enter 发送)</div>
+          <el-button type="primary" :loading="isGenerating" @click="generate">发送</el-button>
         </div>
       </div>
 
@@ -97,24 +102,46 @@ const projectId = computed(() => route.params.id as string)
 const prompt = ref('请帮我拆解当前阶段任务，并给出风险建议。')
 const result = ref<any>(null)
 const suggestionId = ref<number | null>(null)
+const isGenerating = ref(false)
+const chatHistory = ref<{role: string, content: string}[]>([])
 
 const generate = async () => {
-  const current = projectStore.currentProject
-  const { data } = await aiApi.planning({
-    project_id: Number(projectId.value),
-    project_name: current?.name,
-    deadline: current?.due_date,
-    tech_stack: 'Vue 3, TypeScript, FastAPI, SQLite',
-    members: [
-      { name: '张三', role: '组长' },
-      { name: '李四', role: '后端开发' },
-      { name: '王五', role: '前端开发' },
-      { name: '赵六', role: '数据库设计' },
-      { name: '孙七', role: '文档负责人' },
-    ],
-  })
-  result.value = data.result
-  suggestionId.value = data.id
+  if (!prompt.value.trim() || isGenerating.value) return
+  
+  const userPrompt = prompt.value
+  chatHistory.value.push({ role: 'user', content: userPrompt })
+  prompt.value = ''
+  isGenerating.value = true
+  result.value = null // 清空旧结果以展示动画
+  
+  try {
+    // 模拟大模型思考的真实延迟
+    await new Promise(r => setTimeout(r, 1500))
+    
+    const current = projectStore.currentProject
+    const { data } = await aiApi.planning({
+      project_id: Number(projectId.value),
+      project_name: current?.name || '课设项目',
+      deadline: current?.due_date || '2024-06-30',
+      tech_stack: 'Vue 3, TypeScript, FastAPI, SQLite',
+      members: [
+        { name: '张三', role: '组长' },
+        { name: '李四', role: '后端开发' },
+        { name: '王五', role: '前端开发' },
+        { name: '赵六', role: '数据库设计' },
+        { name: '孙七', role: '文档负责人' },
+      ],
+      user_prompt: userPrompt
+    })
+    
+    result.value = data.result
+    suggestionId.value = data.id
+    chatHistory.value.push({ role: 'assistant', content: '已为您深度拆解当前阶段任务，并生成里程碑建议与风险提示，请查阅右侧面板。' })
+  } catch (err) {
+    chatHistory.value.push({ role: 'assistant', content: '抱歉，连接 AI 引擎失败，请检查网络或后端服务。' })
+  } finally {
+    isGenerating.value = false
+  }
 }
 
 const confirmPlan = async () => {
@@ -128,7 +155,6 @@ const weeklyReport = async () => {
   ElMessage.success(data.content)
 }
 
-onMounted(generate)
 </script>
 
 <style scoped>
@@ -193,10 +219,38 @@ onMounted(generate)
 
 .bubble.assistant {
   background: #f8fafc;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
 }
 
 .bubble.user {
   background: linear-gradient(180deg, #eef4ff 0%, #f7fbff 100%);
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.bubble.typing {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  height: 48px;
+}
+
+.bubble.typing span {
+  display: block;
+  width: 6px;
+  height: 6px;
+  background: #cbd5e1;
+  border-radius: 50%;
+  animation: typingBounce 1.4s infinite ease-in-out both;
+}
+
+.bubble.typing span:nth-child(1) { animation-delay: -0.32s; }
+.bubble.typing span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
 }
 
 .panel-header,
@@ -292,5 +346,30 @@ onMounted(generate)
 
 .ai-side {
   overflow: auto;
+}
+
+@media (max-width: 1200px) {
+  .ai-page,
+  .phase-track,
+  .ai-section-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .panel-header,
+  .editor-actions {
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+
+  .quick-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .phase-track {
+    gap: 10px;
+  }
 }
 </style>

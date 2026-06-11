@@ -229,4 +229,35 @@ onMounted(load)
   border: 1px solid #eef2ff;
   border-radius: 14px;
 }
+
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-row {
+    align-items: flex-start;
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ranking-row {
+    grid-template-columns: 24px 38px 1fr;
+  }
+
+  .ranking-row :deep(.el-progress) {
+    grid-column: 1 / -1;
+  }
+}
 </style>

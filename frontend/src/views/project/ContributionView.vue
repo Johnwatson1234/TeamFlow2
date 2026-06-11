@@ -491,4 +491,26 @@ onMounted(load)
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  .header-row,
+  .header-actions,
+  .detail-header,
+  .evidence-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .summary-grid,
+  .metrics-grid,
+  .evidence-list {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-card,
+  .detail-card,
+  .metric-box {
+    padding: 14px;
+  }
+}
 </style>

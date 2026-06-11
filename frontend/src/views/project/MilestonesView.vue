@@ -16,7 +16,7 @@
       </div>
     </div>
 
-    <el-dialog v-model="dialogVisible" title="新增里程碑" width="520px">
+    <el-dialog v-model="dialogVisible" title="新增里程碑" width="min(520px, 92vw)">
       <el-form :model="form" label-position="top">
         <el-form-item label="名称"><el-input v-model="form.name" /></el-form-item>
         <el-form-item label="截止日期"><el-input v-model="form.due_date" /></el-form-item>
@@ -93,5 +93,23 @@ onMounted(load)
   margin-bottom: 10px;
   font-size: 18px;
   font-weight: 700;
+}
+
+@media (max-width: 1200px) {
+  .timeline-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .panel-header {
+    align-items: flex-start;
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  .timeline-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

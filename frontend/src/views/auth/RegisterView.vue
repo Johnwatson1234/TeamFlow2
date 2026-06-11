@@ -68,13 +68,15 @@ const submit = async () => {
 <style scoped>
 .register-shell {
   display: grid;
-  height: 100%;
+  min-height: 100dvh;
+  padding: 24px 16px;
   place-items: center;
   background: radial-gradient(circle at top left, rgba(79, 70, 229, 0.1), transparent 24%);
 }
 
 .register-card {
   width: 520px;
+  max-width: 100%;
   padding: 42px 40px;
 }
 
@@ -96,5 +98,15 @@ const submit = async () => {
   margin-top: 22px;
   text-align: center;
   color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .register-shell {
+    padding: 16px 12px;
+  }
+
+  .register-card {
+    padding: 28px 18px;
+  }
 }
 </style>

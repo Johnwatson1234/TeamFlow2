@@ -6,16 +6,29 @@
         <div class="page-desc">管理和跟踪项目任务，推进任务协同与交付</div>
       </div>
       <div class="header-actions">
-        <el-button @click="detailOpen = !detailOpen">批量操作</el-button>
-        <el-button type="primary" @click="openCreate">新建任务</el-button>
+        <el-button type="primary" @click="openCreate()">新建任务</el-button>
       </div>
     </div>
 
     <div class="filters teamflow-card">
-      <el-select v-model="filters.assignee" placeholder="全部成员"><el-option label="全部成员" value="" /></el-select>
-      <el-select v-model="filters.milestone" placeholder="全部里程碑"><el-option label="全部里程碑" value="" /></el-select>
-      <el-select v-model="filters.priority" placeholder="全部优先级"><el-option label="全部优先级" value="" /></el-select>
-      <el-select v-model="filters.status" placeholder="全部状态"><el-option label="全部状态" value="" /></el-select>
+      <el-select v-model="filters.assignee" placeholder="全部成员">
+        <el-option label="全部成员" value="" />
+        <el-option v-for="m in members" :key="m.user_id" :label="m.name" :value="m.name" />
+      </el-select>
+      <el-select v-model="filters.milestone" placeholder="全部里程碑">
+        <el-option label="全部里程碑" value="" />
+        <el-option v-for="m in milestones" :key="m.id" :label="m.name" :value="m.id" />
+      </el-select>
+      <el-select v-model="filters.priority" placeholder="全部优先级">
+        <el-option label="全部优先级" value="" />
+        <el-option label="高" value="高" />
+        <el-option label="中" value="中" />
+        <el-option label="低" value="低" />
+      </el-select>
+      <el-select v-model="filters.status" placeholder="全部状态">
+        <el-option label="全部状态" value="" />
+        <el-option v-for="c in columns" :key="c.key" :label="c.label" :value="c.key" />
+      </el-select>
       <el-input v-model="filters.keyword" placeholder="搜索任务标题或关键词" />
     </div>
 
@@ -46,48 +59,47 @@
         </div>
       </div>
 
-      <aside class="task-detail teamflow-card" v-if="selectedTask && detailOpen">
-        <div class="detail-head">
-          <h3>任务详情</h3>
-          <el-button text @click="detailOpen = false">关闭</el-button>
-        </div>
-        <el-tabs v-model="detailTab">
-          <el-tab-pane label="基本信息" name="info">
-            <div class="detail-title">{{ selectedTask.title }}</div>
-            <p class="page-desc">{{ selectedTask.description }}</p>
-            <div class="detail-grid">
-              <div><label>负责人</label><span>{{ selectedTask.assignee?.name || '待分配' }}</span></div>
-              <div><label>优先级</label><span>{{ selectedTask.priority }}</span></div>
-              <div><label>状态</label><span>{{ selectedTask.response_status }}</span></div>
-              <div><label>进度</label><span>{{ selectedTask.progress }}%</span></div>
-              <div><label>开始日期</label><span>{{ selectedTask.start_date }}</span></div>
-              <div><label>截止日期</label><span>{{ selectedTask.due_date }}</span></div>
-            </div>
-            <div class="related-box">
-              <div><label>关联需求</label><a class="action-link" @click="openRelated('requirement')">{{ selectedTask.related_requirement }}</a></div>
-              <div><label>关联文档</label><a class="action-link" @click="openRelated('document')">{{ selectedTask.related_document }}</a></div>
-              <div><label>关联提交</label><a class="action-link" @click="openRelated('commit')">{{ selectedTask.related_commit }}</a></div>
-            </div>
-          </el-tab-pane>
-          <el-tab-pane label="活动记录" name="activities">
-            <div class="activity-list">
-              <div v-for="activity in activities" :key="activity.id" class="activity-item">
-                <img :src="activity.actor?.avatar" alt="avatar" />
-                <div>
-                  <div>{{ activity.content }}</div>
-                  <div class="tiny-muted">{{ activity.created_at }}</div>
+      </div>
+
+      <el-drawer v-model="detailOpen" title="任务详情" size="min(480px, 100vw)">
+        <div v-if="selectedTask" class="task-detail-content">
+          <el-tabs v-model="detailTab">
+            <el-tab-pane label="基本信息" name="info">
+              <div class="detail-title">{{ selectedTask.title }}</div>
+              <p class="page-desc">{{ selectedTask.description }}</p>
+              <div class="detail-grid">
+                <div><label>负责人</label><span>{{ selectedTask.assignee?.name || '待分配' }}</span></div>
+                <div><label>优先级</label><span :class="['priority', selectedTask.priority]">{{ selectedTask.priority }}</span></div>
+                <div><label>状态</label><span>{{ columns.find(c => c.key === selectedTask.status)?.label || selectedTask.status }}</span></div>
+                <div><label>进度</label><span>{{ selectedTask.progress }}%</span></div>
+                <div><label>开始日期</label><span>{{ selectedTask.start_date }}</span></div>
+                <div><label>截止日期</label><span>{{ selectedTask.due_date }}</span></div>
+              </div>
+              <div class="related-box">
+                <div><label>关联需求</label><a class="action-link" @click="openRelated('requirement')">{{ selectedTask.related_requirement }}</a></div>
+                <div><label>关联文档</label><a class="action-link" @click="openRelated('document')">{{ selectedTask.related_document }}</a></div>
+                <div><label>关联提交</label><a class="action-link" @click="openRelated('commit')">{{ selectedTask.related_commit }}</a></div>
+              </div>
+            </el-tab-pane>
+            <el-tab-pane label="活动记录" name="activities">
+              <div class="activity-list">
+                <div v-for="activity in activities" :key="activity.id" class="activity-item">
+                  <img :src="activity.actor?.avatar" alt="avatar" />
+                  <div>
+                    <div>{{ activity.content }}</div>
+                    <div class="tiny-muted">{{ activity.created_at }}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </el-tab-pane>
-        </el-tabs>
-        <div class="detail-actions">
-          <el-button @click="showEdit = true">编辑任务</el-button>
-          <el-button type="warning" @click="markBlocked">标记阻塞</el-button>
-          <el-button type="primary" @click="acceptTask">更新进度</el-button>
+            </el-tab-pane>
+          </el-tabs>
+          <div class="detail-actions" style="margin-top: 24px;">
+            <el-button @click="showEdit = true">编辑任务</el-button>
+            <el-button type="warning" @click="markBlocked">标记阻塞</el-button>
+            <el-button type="primary" @click="acceptTask">更新进度</el-button>
+          </div>
         </div>
-      </aside>
-    </div>
+      </el-drawer>
 
     <div class="teamflow-card milestones-panel">
       <div class="panel-header">
@@ -103,7 +115,7 @@
       </div>
     </div>
 
-    <el-dialog v-model="showEdit" :title="editingTask.id ? '编辑任务' : '新建任务'" width="680px">
+    <el-dialog v-model="showEdit" :title="editingTask.id ? '编辑任务' : '新建任务'" width="min(680px, 92vw)">
       <el-form :model="editingTask" label-position="top">
         <el-form-item label="任务标题"><el-input v-model="editingTask.title" /></el-form-item>
         <el-form-item label="任务描述"><el-input v-model="editingTask.description" rows="4" type="textarea" /></el-form-item>
@@ -154,7 +166,7 @@ const milestones = ref<any[]>([])
 const activities = ref<any[]>([])
 const members = ref<any[]>([])
 const selectedTask = ref<any>(null)
-const detailOpen = ref(true)
+const detailOpen = ref(false)
 const detailTab = ref('info')
 const showEdit = ref(false)
 const filters = reactive({ assignee: '', milestone: '', priority: '', status: '', keyword: '' })
@@ -183,9 +195,20 @@ const columns = [
   { key: 'DONE', label: '已完成' },
 ]
 
+const filteredTasks = computed(() => {
+  return tasks.value.filter((task) => {
+    const matchAssignee = !filters.assignee || task.assignee?.name === filters.assignee || task.assignee_id === filters.assignee
+    const matchMilestone = !filters.milestone || task.milestone_id === filters.milestone || task.milestone?.name === filters.milestone
+    const matchPriority = !filters.priority || task.priority === filters.priority
+    const matchStatus = !filters.status || task.status === filters.status
+    const matchKeyword = !filters.keyword || `${task.title}${task.description}`.includes(filters.keyword)
+    return matchAssignee && matchMilestone && matchPriority && matchStatus && matchKeyword
+  })
+})
+
 const grouped = computed(() =>
   columns.reduce<Record<string, any[]>>((acc, column) => {
-    acc[column.key] = tasks.value.filter((task) => task.status === column.key)
+    acc[column.key] = filteredTasks.value.filter((task) => task.status === column.key)
     return acc
   }, {}),
 )
@@ -309,9 +332,8 @@ onMounted(load)
 }
 
 .kanban-layout {
-  display: grid;
-  gap: 18px;
-  grid-template-columns: 1fr 320px;
+  display: flex;
+  flex-direction: column;
 }
 
 .kanban-board {
@@ -474,5 +496,49 @@ onMounted(load)
 .milestone-status {
   margin: 8px 0 6px;
   color: var(--primary);
+}
+
+@media (max-width: 1200px) {
+  .filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .kanban-board {
+    overflow-x: auto;
+    grid-auto-columns: minmax(240px, 1fr);
+    grid-auto-flow: column;
+    grid-template-columns: none;
+  }
+
+  .milestone-track {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .header-row,
+  .header-actions,
+  .detail-actions {
+    align-items: stretch;
+    gap: 10px;
+    flex-direction: column;
+  }
+
+  .filters,
+  .detail-grid,
+  .related-box,
+  .milestone-track {
+    grid-template-columns: 1fr;
+  }
+
+  .kanban-column {
+    min-width: 240px;
+  }
+
+  .detail-head {
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div class="messages-page" v-loading="loading">
-    <div class="teamflow-card ai-insight-banner">
+    <div class="teamflow-card ai-insight-banner" v-if="!hideBanner">
       <div>
         <div class="section-title">讨论内容已接入成员画像分析</div>
         <div class="section-subtitle">
@@ -10,6 +10,7 @@
       <div class="banner-actions">
         <el-button @click="router.push(`/projects/${projectId}/contribution`)">查看贡献分析</el-button>
         <el-button type="primary" @click="router.push(`/projects/${projectId}/career`)">查看成员画像</el-button>
+        <el-button text circle @click="hideBanner = true"><el-icon><Close /></el-icon></el-button>
       </div>
     </div>
 
@@ -86,7 +87,15 @@
               class="task-block"
               @click="openReferencedTask(message)"
             >
-              {{ message.content }}
+              <div class="task-ref-icon">
+                <el-icon><DocumentChecked /></el-icon>
+              </div>
+              <div class="task-ref-content">
+                <div class="task-ref-title">{{ message.metadata?.task_title || message.content.split('\n')[0] }}</div>
+                <div class="task-ref-desc tiny-muted" v-if="message.content.includes('\n备注：')">
+                  {{ message.content.split('\n备注：')[1] }}
+                </div>
+              </div>
             </div>
             <div v-else class="text-bubble">{{ message.content }}</div>
           </div>
@@ -163,7 +172,7 @@
       </div>
     </aside>
 
-    <el-dialog v-model="createDialog" title="新建会话" width="520px">
+    <el-dialog v-model="createDialog" title="新建会话" width="min(520px, 92vw)">
       <el-form :model="conversationForm" label-position="top">
         <el-form-item label="会话名称"><el-input v-model="conversationForm.name" /></el-form-item>
       </el-form>
@@ -176,6 +185,7 @@
 </template>
 
 <script setup lang="ts">
+import { Close, DocumentChecked } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -185,6 +195,8 @@ import { useUserStore } from '@/stores/user'
 
 type ConversationFilter = 'all' | 'unread' | 'mention' | 'later'
 type EditorMode = 'text' | 'code' | 'task'
+
+const hideBanner = ref(false)
 
 const conversationTabItems: Array<{ key: ConversationFilter; label: string }> = [
   { key: 'all', label: '全部' },
@@ -596,8 +608,34 @@ onMounted(load)
 }
 
 .task-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   background: linear-gradient(180deg, #eef4ff 0%, #f8fbff 100%);
   cursor: pointer;
+  border-color: #c7d2fe;
+}
+
+.task-ref-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  place-items: center;
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.task-ref-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-ref-title {
+  font-weight: 600;
+  color: var(--text);
 }
 
 .message-editor {
@@ -656,5 +694,55 @@ onMounted(load)
   width: 30px;
   height: 30px;
   border-radius: 50%;
+}
+
+@media (max-width: 1200px) {
+  .messages-page {
+    height: auto;
+    grid-template-columns: 300px 1fr;
+  }
+
+  .context-pane {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .messages-page {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-insight-banner,
+  .thread-header,
+  .editor-actions,
+  .thread-header-actions,
+  .banner-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .conversation-pane,
+  .thread-pane,
+  .context-pane {
+    padding: 14px;
+  }
+
+  .message-content {
+    max-width: 100%;
+  }
+
+  .message-row,
+  .message-row.mine {
+    flex-direction: column;
+  }
+
+  .task-reference-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .context-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

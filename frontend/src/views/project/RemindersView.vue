@@ -144,4 +144,30 @@ onMounted(load)
   border-radius: 16px;
   background: #f8fbff;
 }
+
+@media (max-width: 1200px) {
+  .reminder-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .timeline-track {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .header-row,
+  .invite-card,
+  .invite-actions,
+  .todo-row {
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+
+  .reminder-grid,
+  .timeline-track {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

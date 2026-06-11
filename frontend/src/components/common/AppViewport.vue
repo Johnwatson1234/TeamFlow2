@@ -34,30 +34,21 @@ const updateSize = () => {
   viewportHeight.value = window.innerHeight
 }
 
-const scale = computed(() => {
-  const availableWidth = Math.max(viewportWidth.value - props.padding * 2, 320)
-  const availableHeight = Math.max(viewportHeight.value - props.padding * 2, 320)
-  return Math.min(1, availableWidth / props.baseWidth, availableHeight / props.baseHeight)
-})
-
 const shellStyle = computed(() => ({
-  padding: `${props.padding}px`,
   background: props.background,
 }))
 
 const frameStyle = computed(() => ({
-  width: `${props.baseWidth * scale.value}px`,
-  height: `${props.baseHeight * scale.value}px`,
+  width: '100%',
+  minHeight: '100dvh',
 }))
 
 const stageStyle = computed(() => ({
-  width: `${props.baseWidth}px`,
-  height: `${props.baseHeight}px`,
-  transform: `scale(${scale.value})`,
-  transformOrigin: 'top left',
-  '--app-width': `${props.baseWidth}px`,
-  '--app-height': `${props.baseHeight}px`,
-  '--app-scale': String(scale.value),
+  width: '100%',
+  minHeight: '100dvh',
+  '--app-width': `${viewportWidth.value}px`,
+  '--app-height': `${viewportHeight.value}px`,
+  '--app-scale': '1',
 } as Record<string, string>))
 
 onMounted(() => {
@@ -72,19 +63,18 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .viewport-shell {
-  display: grid;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  place-items: center;
+  width: 100%;
+  min-height: 100dvh;
 }
 
 .viewport-frame {
   position: relative;
-  overflow: hidden;
+  width: 100%;
+  min-height: 100dvh;
 }
 
 .viewport-stage {
-  overflow: hidden;
+  width: 100%;
+  min-height: 100dvh;
 }
 </style>

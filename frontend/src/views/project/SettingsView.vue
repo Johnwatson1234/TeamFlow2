@@ -197,4 +197,20 @@ onMounted(load)
   height: 42px;
   border-radius: 50%;
 }
+
+@media (max-width: 1200px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-row,
+  .member-row,
+  .invite-row {
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+}
 </style>

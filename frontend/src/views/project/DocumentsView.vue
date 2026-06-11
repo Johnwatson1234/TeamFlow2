@@ -96,4 +96,17 @@ onMounted(load)
   display: flex;
   gap: 10px;
 }
+
+@media (max-width: 768px) {
+  .header-row,
+  .doc-row {
+    align-items: flex-start;
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  .doc-tags {
+    flex-wrap: wrap;
+  }
+}
 </style>

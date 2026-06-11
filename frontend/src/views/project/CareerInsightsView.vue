@@ -1,5 +1,25 @@
 <template>
-  <div class="career-page" v-if="payload">
+  <div class="career-page">
+    <div class="ai-terminal-overlay" v-if="isAnalyzing">
+      <div class="terminal-window">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          </div>
+          <span class="terminal-title">TeamFlow AI Engine - 深度解析模式</span>
+        </div>
+        <div class="terminal-body" ref="terminalBody">
+          <div v-for="(log, idx) in terminalLogs" :key="idx" class="terminal-log">
+            <span class="log-time">[{{ log.time }}]</span>
+            <span class="log-level" :class="log.level">[{{ log.level }}]</span>
+            <span class="log-msg">{{ log.msg }}</span>
+          </div>
+          <div class="terminal-cursor" v-if="isAnalyzing">_</div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="payload">
     <div class="hero-card teamflow-card">
       <div class="hero-copy">
         <span class="status-tag purple">AI 个性化展示</span>
@@ -76,13 +96,13 @@
               <div class="role-tags">
                 <span v-for="item in selectedProfile.recommended_roles" :key="item" class="status-tag green">{{ item }}</span>
               </div>
-              <p class="spotlight-copy">{{ selectedProfile.career_recommendation }}</p>
+              <p class="spotlight-copy">{{ animatedRecommendation }}<span v-if="animatedRecommendation !== selectedProfile.career_recommendation" class="typing-cursor">_</span></p>
             </div>
             <div class="spotlight-block">
               <div class="section-title">沟通风格</div>
-              <p class="spotlight-copy">{{ selectedProfile.communication_style }}</p>
+              <p class="spotlight-copy">{{ animatedCommunication }}<span v-if="animatedCommunication !== selectedProfile.communication_style" class="typing-cursor">_</span></p>
               <div class="section-title secondary-title">项目内总结</div>
-              <p class="spotlight-copy">{{ selectedProfile.contribution_summary }}</p>
+              <p class="spotlight-copy">{{ animatedSummary }}<span v-if="animatedSummary !== selectedProfile.contribution_summary" class="typing-cursor">_</span></p>
             </div>
           </div>
         </div>
@@ -140,12 +160,13 @@
         </div>
       </section>
     </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { projectApi } from '@/api'
@@ -156,11 +177,78 @@ const router = useRouter()
 const projectId = computed(() => route.params.id as string)
 const payload = ref<any>(null)
 const selectedProfileId = ref<number | null>(null)
+const isAnalyzing = ref(false)
+const terminalLogs = ref<{time: string, level: string, msg: string}[]>([])
+
+const simulateAiAnalysis = async () => {
+  isAnalyzing.value = true
+  terminalLogs.value = []
+  const msgs = [
+    { level: 'INFO', msg: '初始化大模型分析引擎 (LLM Engine)...' },
+    { level: 'INFO', msg: '建立与协作数据库的安全连接...' },
+    { level: 'WARN', msg: '正在抽取全员的 Git 代码提交日志...' },
+    { level: 'INFO', msg: '已解析 200+ 次提交，正在分析代码质量、技术栈偏好与代码风格...' },
+    { level: 'WARN', msg: '正在抽取并清洗即时通讯记录与文档协作数据...' },
+    { level: 'INFO', msg: '已发现 1,000+ 条协作记录，启动 NLP 情感分析与沟通倾向提取...' },
+    { level: 'WARN', msg: '正在聚合各成员的任务流转率、延期风险与解决瓶颈能力...' },
+    { level: 'INFO', msg: '多维度数据融合完毕，正在构建六维能力雷达...' },
+    { level: 'INFO', msg: '生成针对性的性格画像，并智能匹配就业与职业规划...' },
+    { level: 'SUCCESS', msg: '分析完成！正在渲染结构化分析报告...' }
+  ]
+  
+  for (const m of msgs) {
+    await new Promise(r => setTimeout(r, 400 + Math.random() * 600))
+    terminalLogs.value.push({
+      time: new Date().toLocaleTimeString(),
+      level: m.level,
+      msg: m.msg
+    })
+  }
+  await new Promise(r => setTimeout(r, 800))
+  isAnalyzing.value = false
+}
 
 const selectedProfile = computed(() => {
   const profiles = payload.value?.member_profiles || []
   return profiles.find((item: any) => item.user.id === selectedProfileId.value) || profiles[0] || null
 })
+
+const animatedRecommendation = ref('')
+const animatedCommunication = ref('')
+const animatedSummary = ref('')
+
+let typingTimeouts: any[] = []
+
+watch(selectedProfile, (newVal) => {
+  typingTimeouts.forEach(clearTimeout)
+  typingTimeouts = []
+  
+  if (!newVal) {
+    animatedRecommendation.value = ''
+    animatedCommunication.value = ''
+    animatedSummary.value = ''
+    return
+  }
+  
+  animatedRecommendation.value = ''
+  animatedCommunication.value = ''
+  animatedSummary.value = ''
+  
+  const typeText = async (source: string, targetRef: any) => {
+    if (!source) return
+    for (let i = 0; i <= source.length; i++) {
+      targetRef.value = source.slice(0, i)
+      await new Promise(r => {
+        const timeout = setTimeout(r, 10 + Math.random() * 20)
+        typingTimeouts.push(timeout)
+      })
+    }
+  }
+  
+  typeText(newVal.career_recommendation || '', animatedRecommendation)
+  typeText(newVal.communication_style || '', animatedCommunication)
+  typeText(newVal.contribution_summary || '', animatedSummary)
+}, { immediate: true })
 
 const applyPayload = (data: any) => {
   payload.value = data
@@ -175,14 +263,18 @@ const applyPayload = (data: any) => {
 }
 
 const load = async () => {
+  if (!payload.value) {
+    await simulateAiAnalysis()
+  }
   const { data } = await projectApi.contribution(projectId.value)
   applyPayload(data)
 }
 
 const recalculate = async () => {
+  await simulateAiAnalysis()
   const { data } = await projectApi.recalculateContribution(projectId.value)
   applyPayload(data)
-  ElMessage.success('成员画像已更新')
+  ElMessage.success('成员画像已深度更新')
 }
 
 const goContribution = async () => {
@@ -197,6 +289,101 @@ onMounted(load)
   display: flex;
   flex-direction: column;
   gap: 18px;
+  position: relative;
+}
+
+/* AI Terminal Overlay */
+.ai-terminal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.terminal-window {
+  width: 100%;
+  max-width: 800px;
+  background: #0d1117;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal-header {
+  height: 40px;
+  background: #161b22;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid #30363d;
+  position: relative;
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.dot.red { background: #ff5f56; }
+.dot.yellow { background: #ffbd2e; }
+.dot.green { background: #27c93f; }
+
+.terminal-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #8b949e;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.terminal-body {
+  padding: 20px;
+  height: 400px;
+  overflow-y: auto;
+  font-family: 'Fira Code', Consolas, Monaco, monospace;
+  font-size: 14px;
+  color: #c9d1d9;
+  line-height: 1.6;
+}
+
+.terminal-log {
+  margin-bottom: 6px;
+  animation: log-in 0.3s ease-out forwards;
+}
+
+@keyframes log-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.log-time { color: #8b949e; margin-right: 12px; }
+.log-level { font-weight: bold; margin-right: 12px; }
+.log-level.INFO { color: #58a6ff; }
+.log-level.WARN { color: #d2a8ff; }
+.log-level.SUCCESS { color: #3fb950; }
+
+.terminal-cursor {
+  display: inline-block;
+  width: 10px;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .hero-card,
@@ -352,6 +539,15 @@ onMounted(load)
   margin: 12px 0 0;
   color: var(--text-muted);
   line-height: 1.75;
+  min-height: 48px;
+}
+
+.typing-cursor {
+  display: inline-block;
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+  color: var(--primary);
+  font-weight: bold;
 }
 
 .secondary-title {
@@ -415,6 +611,29 @@ onMounted(load)
 
   .hero-card {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-actions,
+  .spotlight-head,
+  .spotlight-tags {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hero-metrics,
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-card,
+  .member-column,
+  .spotlight-card,
+  .chart-card,
+  .metric-panel,
+  .list-panel {
+    padding: 16px;
   }
 }
 </style>

@@ -71,4 +71,12 @@ onMounted(load)
 .risk-table {
   padding: 18px;
 }
+
+@media (max-width: 768px) {
+  .header-row {
+    align-items: flex-start;
+    gap: 12px;
+    flex-direction: column;
+  }
+}
 </style>

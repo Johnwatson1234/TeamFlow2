@@ -258,4 +258,21 @@ onMounted(load)
   border: 1px solid #eef2ff;
   border-radius: 14px;
 }
+
+@media (max-width: 1200px) {
+  .files-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .file-bottom-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .file-bottom-grid,
+  .preview-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

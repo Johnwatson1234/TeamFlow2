@@ -1,0 +1,49 @@
+nohup: ignoring input
+INFO:     Started server process [2840]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:9414 - "OPTIONS /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9414 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9414 - "OPTIONS /api/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8869 - "OPTIONS /api/projects/me/invitations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3013 - "OPTIONS /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9414 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3013 - "GET /api/projects/me/invitations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8869 - "GET /api/projects HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8869 - "OPTIONS /api/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8869 - "GET /api/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8869 - "OPTIONS /api/me/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:8869 - "GET /api/me/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2502 - "OPTIONS /api/projects/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13928 - "OPTIONS /api/projects/1/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2102 - "OPTIONS /api/projects/1/milestones HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10971 - "OPTIONS /api/projects/1/members HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "OPTIONS /api/projects/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:9158 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10971 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2502 - "GET /api/projects/1/milestones HTTP/1.1" 200 OK
+INFO:     127.0.0.1:2102 - "GET /api/projects/1/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/projects/1/members HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13928 - "GET /api/projects/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/projects/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "OPTIONS /api/tasks/4/activities HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/tasks/4/activities HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/projects/1/milestones HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "OPTIONS /api/projects/1/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/projects/1/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "OPTIONS /api/projects/1/files HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/projects/1/files HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "OPTIONS /api/projects/1/graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/projects/1/graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "OPTIONS /api/projects/1/git/commits HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/projects/1/git/commits HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "OPTIONS /api/projects/1/contribution HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/projects/1/contribution HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/projects/1/contribution HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "OPTIONS /api/projects/1/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/projects/1/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "OPTIONS /api/ai/planning HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "POST /api/ai/planning HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/projects/1/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10424 - "GET /api/projects/1/graph HTTP/1.1" 200 OK

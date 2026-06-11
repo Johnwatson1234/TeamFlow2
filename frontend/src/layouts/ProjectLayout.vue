@@ -42,6 +42,9 @@
     <div class="project-main">
       <header class="project-topbar">
         <div class="topbar-left">
+          <el-button class="mobile-nav-trigger" circle text @click="mobileNavVisible = true">
+            <el-icon :size="18"><Operation /></el-icon>
+          </el-button>
           <el-icon :size="20"><Operation /></el-icon>
           <div class="breadcrumb">
             <span>项目空间</span>
@@ -86,7 +89,7 @@
       </main>
     </div>
     </div>
-    <el-dialog v-model="searchVisible" title="快速搜索与跳转" width="560px">
+    <el-dialog v-model="searchVisible" title="快速搜索与跳转" width="min(560px, 92vw)">
       <el-input v-model="searchKeyword" clearable placeholder="搜索页面、功能、任务关键词" />
       <div class="search-shortcuts">
         <button
@@ -100,6 +103,30 @@
         </button>
       </div>
     </el-dialog>
+    <el-drawer v-model="mobileNavVisible" class="mobile-nav-drawer" direction="ltr" size="280px">
+      <template #header>
+        <div class="mobile-drawer-head">
+          <div class="brand-mark">⬡</div>
+          <div>
+            <div class="brand-name">TeamFlow</div>
+            <div class="tiny-muted">{{ currentProject?.name }}</div>
+          </div>
+        </div>
+      </template>
+      <nav class="mobile-nav-list">
+        <router-link
+          v-for="item in navItems"
+          :key="item.name"
+          :to="item.to"
+          class="mobile-nav-item"
+          :class="{ active: route.name === item.name }"
+          @click="mobileNavVisible = false"
+        >
+          <el-icon><component :is="item.icon" /></el-icon>
+          <span>{{ item.label }}</span>
+        </router-link>
+      </nav>
+    </el-drawer>
   </AppViewport>
 </template>
 
@@ -136,6 +163,7 @@ const notificationStore = useNotificationStore()
 const userStore = useUserStore()
 const searchVisible = ref(false)
 const searchKeyword = ref('')
+const mobileNavVisible = ref(false)
 
 const projectId = computed(() => route.params.id as string)
 const currentProject = computed(() => projectStore.currentProject)
@@ -202,64 +230,88 @@ const handleUserCommand = async (command: string) => {
 }
 
 watch(projectId, bootstrap, { immediate: true })
+watch(() => route.fullPath, () => {
+  mobileNavVisible.value = false
+})
 onMounted(bootstrap)
 </script>
 
 <style scoped>
 .project-layout {
   display: grid;
-  height: 100%;
+  min-height: 100dvh;
   grid-template-columns: 248px 1fr;
+  background: var(--bg);
 }
 
 .sidebar {
   display: flex;
   flex-direction: column;
-  padding: 14px 12px;
+  padding: 16px 12px;
   gap: 12px;
   background: var(--sidebar-bg);
   color: var(--sidebar-text);
+  border-right: 1px solid var(--sidebar-border);
+  box-shadow: 1px 0 10px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 10;
 }
 
 .sidebar-brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  color: white;
+  color: #fff;
+  padding: 0 8px;
+  letter-spacing: -0.01em;
 }
 
 .brand-mark {
   display: grid;
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   place-items: center;
-  background: linear-gradient(135deg, #5b7cfe 0%, #7158ff 100%);
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
 }
 
 .project-switch {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.project-switch:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .switch-icon {
   display: grid;
   width: 36px;
   height: 36px;
-  border-radius: 12px;
+  border-radius: 10px;
   place-items: center;
   color: white;
-  background: linear-gradient(135deg, #4f6cf3 0%, #5440da 100%);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .switch-name {
   font-size: 14px;
+  font-weight: 500;
   color: white;
 }
 
@@ -267,15 +319,17 @@ onMounted(bootstrap)
   display: flex;
   gap: 6px;
   align-items: center;
-  margin-top: 6px;
-  font-size: 13px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--sidebar-text);
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #22c55e;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
 }
 
 .sidebar-nav {
@@ -283,8 +337,13 @@ onMounted(bootstrap)
   flex: 1;
   flex-direction: column;
   min-height: 0;
-  gap: 4px;
+  gap: 2px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
 }
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
 .nav-item,
 .reminder-shortcut {
@@ -292,10 +351,13 @@ onMounted(bootstrap)
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  color: rgba(226, 232, 240, 0.88);
-  transition: 0.2s ease;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--sidebar-text);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .nav-item {
@@ -303,21 +365,39 @@ onMounted(bootstrap)
 }
 
 .nav-item.active,
-.nav-item:hover,
-.reminder-shortcut.active,
-.reminder-shortcut:hover {
-  color: white;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(79, 70, 229, 0.9) 100%);
+.reminder-shortcut.active {
+  color: var(--sidebar-text-active);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 2px 0 0 var(--primary);
+}
+
+.nav-item:hover:not(.active),
+.reminder-shortcut:hover:not(.active) {
+  color: #fff;
+  background: var(--sidebar-item-hover);
+}
+
+.nav-item .el-icon {
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.nav-item.active .el-icon {
+  opacity: 1;
+  color: var(--primary-light);
 }
 
 .reminder-shortcut b {
   display: grid;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  border-radius: 11px;
   place-items: center;
-  background: rgba(239, 68, 68, 0.92);
-  font-size: 12px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
 .sidebar-user {
@@ -325,16 +405,30 @@ onMounted(bootstrap)
   gap: 12px;
   align-items: center;
   padding: 12px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sidebar-user:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .sidebar-user img,
 .topbar-avatar {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-name {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .project-main {
@@ -342,16 +436,22 @@ onMounted(bootstrap)
   flex-direction: column;
   min-height: 0;
   min-width: 0;
+  position: relative;
 }
 
 .project-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 68px;
-  padding: 0 22px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  background: rgba(255, 255, 255, 0.96);
+  height: 64px;
+  padding: 0 24px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 9;
 }
 
 .topbar-left,
@@ -359,21 +459,41 @@ onMounted(bootstrap)
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+}
+
+.mobile-nav-trigger {
+  display: none;
 }
 
 .breadcrumb {
   color: var(--text-muted);
   font-size: 14px;
+  font-weight: 500;
+}
+
+.breadcrumb span:not(:last-child) {
+  opacity: 0.7;
+}
+
+.breadcrumb strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .topbar-right {
-  gap: 18px;
+  gap: 12px;
 }
 
 .top-icon-btn {
   position: relative;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.top-icon-btn:hover {
   color: var(--text);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .bell {
@@ -382,55 +502,164 @@ onMounted(bootstrap)
 
 .bell span {
   position: absolute;
-  top: -7px;
-  right: -10px;
+  top: -4px;
+  right: -4px;
   display: grid;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   place-items: center;
   background: var(--danger);
   color: white;
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
 }
 
 .user-trigger {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   cursor: pointer;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+
+.user-trigger:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.topbar-user {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
 }
 
 .project-content {
   flex: 1;
   min-height: 0;
-  padding: 18px;
-  overflow: hidden;
+  padding: 24px;
+  overflow: auto;
 }
 
 .project-page-view {
   width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 100%;
+  overflow: visible;
+  animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .search-shortcuts {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 18px;
+  gap: 10px;
+  margin-top: 16px;
 }
 
 .search-action {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  border: 1px solid #e6ecfb;
-  border-radius: 14px;
-  background: #fff;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
   cursor: pointer;
   text-align: left;
+  transition: all 0.2s ease;
+}
+
+.search-action:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.search-action strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.mobile-drawer-head,
+.mobile-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-nav-item {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.mobile-nav-item.active {
+  background: rgba(79, 70, 229, 0.08);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+@media (max-width: 1024px) {
+  .project-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .mobile-nav-trigger {
+    display: inline-flex;
+  }
+
+  .project-topbar {
+    height: 60px;
+    padding: 0 16px;
+  }
+
+  .project-content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .project-topbar {
+    height: auto;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .topbar-left {
+    width: 100%;
+  }
+
+  .topbar-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .topbar-user {
+    display: none;
+  }
+
+  .project-content {
+    padding: 12px;
+  }
 }
 </style>

@@ -60,4 +60,11 @@ onMounted(load)
   height: 40px;
   border-radius: 50%;
 }
+
+@media (max-width: 768px) {
+  .header-row,
+  .audit-item {
+    align-items: flex-start;
+  }
+}
 </style>

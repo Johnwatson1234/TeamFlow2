@@ -100,59 +100,78 @@
             </el-select>
           </section>
 
-          <section class="project-table teamflow-card">
-            <div class="table-head">
-              <span>项目名称 / 简介</span>
-              <span>成员数</span>
-              <span>进度</span>
-              <span>截止日期</span>
-              <span>最近更新时间</span>
-              <span>操作</span>
-            </div>
-            <div v-if="!filteredProjects.length" class="empty-state">
-              当前筛选条件下暂无项目，试试切换分类、状态或项目归属。
-            </div>
-            <div v-for="item in filteredProjects" :key="item.id" class="project-row">
-              <div class="project-cell title">
-                <div class="project-icon">/&gt;</div>
-                <div>
-                  <div class="project-name">{{ item.name }}</div>
-                  <div class="status-tag blue">{{ item.category }}</div>
-                  <div class="tiny-muted">{{ item.description }}</div>
-                  <div class="project-meta">
-                    <span>{{ item.course_name }}</span>
-                    <span>{{ item.owner_name }} 负责</span>
-                    <span>{{ item.is_owner ? '我创建的项目' : '我参与的项目' }}</span>
+          <section class="project-table-wrapper teamflow-card">
+            <el-table :data="pagedProjects" style="width: 100%" @sort-change="handleSortChange">
+              <template #empty>
+                <el-empty description="当前筛选条件下暂无项目，试试切换分类或状态吧">
+                  <el-button type="primary" plain @click="showCreate = true">创建项目</el-button>
+                </el-empty>
+              </template>
+              <el-table-column label="项目名称 / 简介" min-width="320">
+                <template #default="{ row }">
+                  <div class="project-cell title">
+                    <div class="project-icon">&lt;/&gt;</div>
+                    <div>
+                      <div class="project-name">{{ row.name }}</div>
+                      <div class="status-tag blue">{{ row.category }}</div>
+                      <div class="tiny-muted">{{ row.description }}</div>
+                      <div class="project-meta">
+                        <span>{{ row.course_name }}</span>
+                        <span>{{ row.owner_name }} 负责</span>
+                        <span>{{ row.is_owner ? '我创建的项目' : '我参与的项目' }}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <div class="project-cell">
-                <div class="avatar-group">
-                  <img v-for="member in item.members?.slice(0, 4)" :key="member.id" :src="member.avatar" alt="avatar" />
-                  <span>{{ item.member_count }} 人</span>
-                </div>
-              </div>
-              <div class="project-cell progress-cell">
-                <el-progress :percentage="item.progress" :show-text="false" />
-                <span>{{ item.progress }}%</span>
-              </div>
-              <div class="project-cell">
-                <div>{{ item.due_date }}</div>
-                <div class="status-tag" :class="item.is_archived ? 'purple' : 'green'">{{ item.status }}</div>
-              </div>
-              <div class="project-cell">
-                <div>{{ item.updated_at }}</div>
-                <div class="tiny-muted">{{ item.updated_by }} 更新</div>
-              </div>
-              <div class="project-cell">
-                <el-button plain type="primary" @click="router.push(`/projects/${item.id}`)">进入项目</el-button>
-              </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="成员" width="160">
+                <template #default="{ row }">
+                  <div class="avatar-group">
+                    <img v-for="member in row.members?.slice(0, 4)" :key="member.id" :src="member.avatar" alt="avatar" />
+                    <span style="margin-left: 8px; font-size: 13px; font-weight: 500;">{{ row.member_count }} 人</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="进度" width="180" sortable="custom" prop="progress">
+                <template #default="{ row }">
+                  <div class="progress-cell">
+                    <el-progress :percentage="row.progress" :show-text="false" style="flex: 1;" />
+                    <span style="font-size: 13px; min-width: 34px; font-weight: 500;">{{ row.progress }}%</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="状态与截止日期" width="180">
+                <template #default="{ row }">
+                  <div style="font-size: 13px; font-weight: 600; color: var(--text);">{{ row.due_date }}</div>
+                  <div class="status-tag" :class="row.is_archived ? 'purple' : 'green'" style="margin-top: 6px;">{{ row.status }}</div>
+                </template>
+              </el-table-column>
+              <el-table-column label="最近更新" width="180" sortable="custom" prop="updated_at">
+                <template #default="{ row }">
+                  <div style="font-size: 13px; font-weight: 500; color: var(--text);">{{ row.updated_at }}</div>
+                  <div class="tiny-muted" style="margin-top: 2px;">{{ row.updated_by }} 更新</div>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="120" fixed="right" align="right">
+                <template #default="{ row }">
+                  <el-button plain type="primary" @click="router.push(`/projects/${row.id}`)">进入</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div class="pagination-container" v-if="filteredProjects.length > 0">
+              <el-pagination
+                v-model:current-page="currentPage"
+                v-model:page-size="pageSize"
+                :page-sizes="[10, 20, 50]"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="filteredProjects.length"
+              />
             </div>
           </section>
         </main>
       </div>
 
-      <el-dialog v-model="showCreate" title="创建项目" width="640px">
+      <el-dialog v-model="showCreate" title="创建项目" width="min(640px, 92vw)">
         <el-form :model="createForm" label-position="top">
           <el-form-item label="项目名称">
             <el-input v-model="createForm.name" />
@@ -170,7 +189,7 @@
         </template>
       </el-dialog>
 
-      <el-drawer v-model="drawerVisible" title="协作提醒与通知" size="420px">
+      <el-drawer v-model="drawerVisible" title="协作提醒与通知" size="min(420px, 100vw)">
         <div class="drawer-block">
           <div class="section-title">待处理邀请</div>
           <div v-for="item in notificationStore.myInvitations" :key="item.id" class="drawer-item">
@@ -202,7 +221,7 @@
 <script setup lang="ts">
 import { Bell, DocumentChecked, FolderOpened, UserFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { notificationApi, projectApi, taskApi } from '@/api'
@@ -315,6 +334,45 @@ const filteredProjects = computed(() =>
   }),
 )
 
+const currentPage = ref(1)
+const pageSize = ref(10)
+const sortProp = ref('')
+const sortOrder = ref('')
+
+const sortedProjects = computed(() => {
+  let list = [...filteredProjects.value]
+  if (sortProp.value && sortOrder.value) {
+    list.sort((a, b) => {
+      let valA = a[sortProp.value]
+      let valB = b[sortProp.value]
+      if (sortProp.value === 'progress') {
+        valA = Number(valA)
+        valB = Number(valB)
+      }
+      if (sortOrder.value === 'ascending') {
+        return valA > valB ? 1 : -1
+      } else {
+        return valA < valB ? 1 : -1
+      }
+    })
+  }
+  return list
+})
+
+const pagedProjects = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return sortedProjects.value.slice(start, start + pageSize.value)
+})
+
+const handleSortChange = ({ prop, order }: { prop: string, order: string }) => {
+  sortProp.value = prop
+  sortOrder.value = order
+}
+
+watch([scopeFilter, keyword, statusFilter, categoryFilter], () => {
+  currentPage.value = 1
+})
+
 const primaryProject = computed(() => filteredProjects.value[0] || normalizedProjects.value[0] || null)
 
 const load = async () => {
@@ -387,7 +445,7 @@ onMounted(load)
 
 <style scoped>
 .project-list-page {
-  height: 100%;
+  min-height: 100dvh;
 }
 
 .list-topbar {
@@ -460,7 +518,7 @@ onMounted(load)
 .list-layout {
   display: grid;
   gap: 18px;
-  height: calc(100% - 68px);
+  min-height: calc(100dvh - 68px);
   padding: 18px;
   grid-template-columns: 230px 1fr;
 }
@@ -510,7 +568,7 @@ onMounted(load)
 .list-main {
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .page-header-row {
@@ -528,40 +586,17 @@ onMounted(load)
   grid-template-columns: 1.2fr 180px 180px;
 }
 
-.project-table {
-  height: calc(100% - 186px);
-  padding: 12px 16px 16px;
-  overflow: auto;
+.project-table-wrapper {
+  padding: 16px;
+  overflow: hidden;
 }
 
-.table-head,
-.project-row {
-  display: grid;
-  align-items: center;
-  gap: 18px;
-  grid-template-columns: 2.6fr 0.8fr 1fr 1fr 1fr 0.7fr;
-}
-
-.table-head {
-  padding: 10px 14px 18px;
-  color: var(--text-muted);
-}
-
-.project-row {
-  padding: 14px 12px;
-  border: 1px solid #eef2ff;
-  border-radius: 16px;
-}
-
-.project-row + .project-row {
-  margin-top: 10px;
-}
-
-.empty-state {
-  display: grid;
-  min-height: 180px;
-  color: var(--text-muted);
-  place-items: center;
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
 }
 
 .project-cell.title {
@@ -660,5 +695,98 @@ onMounted(load)
 .drawer-actions {
   display: flex;
   gap: 8px;
+}
+
+@media (max-width: 1200px) {
+  .list-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .list-sidebar {
+    order: 2;
+  }
+
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .list-topbar {
+    height: auto;
+    padding: 14px 16px;
+    align-items: flex-start;
+    gap: 14px;
+    flex-direction: column;
+  }
+
+  .top-left,
+  .top-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .top-left {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .product-name {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: 0;
+    width: 100%;
+  }
+
+  .top-nav {
+    width: 100%;
+    overflow: auto;
+  }
+
+  .list-user-trigger > div {
+    display: none;
+  }
+
+  .list-layout {
+    min-height: auto;
+    padding: 12px;
+  }
+
+  .page-header-row {
+    align-items: flex-start;
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .project-table-wrapper {
+    padding: 14px 0;
+  }
+  
+  .project-cell.title {
+    align-items: flex-start;
+  }
+
+  .project-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .project-name {
+    font-size: 16px;
+  }
+
+  .avatar-group,
+  .progress-cell {
+    flex-wrap: wrap;
+  }
+
+  .drawer-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 </style>

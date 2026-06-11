@@ -15,19 +15,30 @@ const chartRef = ref<HTMLDivElement>()
 let chart: echarts.ECharts | null = null
 
 const colorMap: Record<string, string> = {
-  member: '#1d4ed8',
-  task: '#22c55e',
-  document: '#3b82f6',
-  message: '#8b5cf6',
-  commit: '#f97316',
-  review: '#14b8a6',
+  member: 'var(--chart-node-member)',
+  task: 'var(--chart-node-task)',
+  document: 'var(--chart-node-document)',
+  message: 'var(--chart-node-message)',
+  commit: 'var(--chart-node-commit)',
+  review: 'var(--chart-node-review)',
+}
+
+const cssVar = (name: string, fallback: string) => {
+  if (typeof window === 'undefined') return fallback
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
 }
 
 const render = () => {
   if (!chartRef.value) return
   if (!chart) chart = echarts.init(chartRef.value)
+  const axis = cssVar('--chart-axis', '#6b7c93')
+  const edge = 'rgba(148, 163, 184, 0.5)'
   chart.setOption({
-    tooltip: {},
+    tooltip: {
+      backgroundColor: 'rgba(15, 23, 42, 0.92)',
+      borderWidth: 0,
+      textStyle: { color: '#f8fafc' },
+    },
     series: [
       {
         type: 'graph',
@@ -42,20 +53,28 @@ const render = () => {
         },
         label: {
           show: true,
-          color: '#334155',
+          color: axis,
           fontSize: 13,
+          distance: 8,
         },
         lineStyle: {
-          color: '#c7d2fe',
-          width: 2,
+          color: edge,
+          width: 2.2,
           curveness: 0.18,
+          opacity: 0.9,
         },
         data: props.nodes.map((item) => ({
           id: item.id,
           name: item.label,
           value: item.type,
           symbolSize: item.type === 'member' ? 56 : 44,
-          itemStyle: { color: colorMap[item.type] || '#4f46e5' },
+          itemStyle: {
+            color: cssVar(colorMap[item.type] || '--primary', '#4f46e5'),
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            shadowBlur: 14,
+            shadowColor: 'rgba(15, 23, 42, 0.12)',
+          },
         })),
         links: props.edges.map((item) => ({
           source: item.source,
@@ -84,5 +103,8 @@ onBeforeUnmount(() => {
 .graph-canvas {
   width: 100%;
   height: 640px;
+  border: 1px solid rgba(219, 231, 243, 0.9);
+  border-radius: 18px;
+  background: var(--chart-bg);
 }
 </style>
