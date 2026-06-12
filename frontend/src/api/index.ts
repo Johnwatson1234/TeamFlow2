@@ -1,4 +1,4 @@
-import http from './http'
+import http, { API_BASE_URL } from './http'
 
 const payloadEmpty = {}
 
@@ -86,4 +86,68 @@ export const aiApi = {
   planning: (payload: Record<string, unknown>) => http.post('/ai/planning', payload),
   confirm: (id: number) => http.post(`/ai/planning/${id}/confirm`),
   weeklyReport: (projectId: string | number) => http.post('/ai/reports/weekly', null, { params: { project_id: projectId } }),
+  conversation: (projectId: string | number) => http.get(`/ai/projects/${projectId}/ai/conversation`),
+  fileAnalysis: (projectId: string | number, payload: Record<string, unknown>) => http.post(`/ai/projects/${projectId}/ai/file-analysis`, payload),
+  executeActions: (projectId: string | number, payload: Record<string, unknown>) => http.post(`/ai/projects/${projectId}/ai/actions/execute`, payload),
+}
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('teamflow-token')
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+  return headers
+}
+
+export const streamAiChat = async (
+  projectId: string | number,
+  payload: Record<string, unknown>,
+  handlers: {
+    onStatus?: (payload: any) => void
+    onConversation?: (payload: any) => void
+    onChunk?: (payload: any) => void
+    onAction?: (payload: any) => void
+    onDone?: (payload: any) => void
+    onError?: (payload: any) => void
+  },
+) => {
+  const response = await fetch(`${API_BASE_URL}/ai/projects/${projectId}/ai/chat/stream`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok || !response.body) {
+    throw new Error(`AI 请求失败: ${response.status}`)
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder('utf-8')
+  let buffer = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const blocks = buffer.split('\n\n')
+    buffer = blocks.pop() || ''
+
+    for (const block of blocks) {
+      const lines = block.split('\n')
+      const event = lines.find((line) => line.startsWith('event:'))?.replace('event:', '').trim()
+      const dataLine = lines.find((line) => line.startsWith('data:'))?.replace('data:', '').trim()
+      if (!event || !dataLine) continue
+      const parsed = JSON.parse(dataLine)
+      if (event === 'status') handlers.onStatus?.(parsed)
+      if (event === 'conversation') handlers.onConversation?.(parsed)
+      if (event === 'chunk') handlers.onChunk?.(parsed)
+      if (event === 'action') handlers.onAction?.(parsed)
+      if (event === 'done') handlers.onDone?.(parsed)
+      if (event === 'error') handlers.onError?.(parsed)
+    }
+  }
 }

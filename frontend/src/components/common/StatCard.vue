@@ -1,7 +1,7 @@
 <template>
-  <div class="teamflow-card stat-card">
-    <div class="stat-icon" :style="{ background: tint }">
-      <el-icon :size="22" :color="iconColor">
+  <div class="teamflow-card stat-card" :class="[theme]" :style="{ background: bg || 'var(--card)' }">
+    <div class="stat-icon" :style="{ background: theme === 'dark' ? 'rgba(255,255,255,0.2)' : tint }">
+      <el-icon :size="22" :color="theme === 'dark' ? '#fff' : iconColor">
         <component :is="icon" />
       </el-icon>
     </div>
@@ -25,6 +25,8 @@ defineProps<{
   icon: any
   tint?: string
   iconColor?: string
+  bg?: string
+  theme?: 'light' | 'dark'
   trend?: {
     text: string
     type: 'up' | 'down' | 'flat'
@@ -73,5 +75,21 @@ defineProps<{
 
 .trend.flat {
   color: var(--text-muted);
+}
+
+/* Dark theme overrides */
+.stat-card.dark {
+  color: #fff;
+}
+.stat-card.dark .stat-title,
+.stat-card.dark .stat-foot {
+  color: rgba(255, 255, 255, 0.9);
+}
+.stat-card.dark .metric-value {
+  color: #fff;
+}
+.stat-card.dark .trend {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 </style>

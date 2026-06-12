@@ -5,26 +5,30 @@
         <h1 class="page-title">项目设置</h1>
         <div class="page-desc">配置项目基础信息与成员协作，管理项目空间的各项参数与权限</div>
       </div>
-      <el-button type="primary" @click="save">保存设置</el-button>
+      <el-button type="primary" size="large" class="save-btn" @click="save">保存设置</el-button>
     </div>
 
     <div class="settings-grid">
       <div class="teamflow-card panel">
-        <div class="section-title">项目信息</div>
+        <div class="section-title">
+          <el-icon style="margin-right: 8px; color: #4F46E5; font-size: 20px; vertical-align: -3px;"><Setting /></el-icon>项目信息
+        </div>
         <el-form :model="form" label-position="top">
           <el-form-item label="项目名称"><el-input v-model="form.name" /></el-form-item>
           <el-form-item label="课程名称"><el-input v-model="form.course_name" /></el-form-item>
           <el-form-item label="项目简介"><el-input v-model="form.description" rows="4" type="textarea" /></el-form-item>
-          <div class="grid-2">
-            <el-form-item label="开始日期"><el-input v-model="form.start_date" /></el-form-item>
-            <el-form-item label="截止日期"><el-input v-model="form.due_date" /></el-form-item>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <el-form-item label="开始日期"><el-date-picker v-model="form.start_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" placeholder="选择开始日期" /></el-form-item>
+            <el-form-item label="截止日期"><el-date-picker v-model="form.due_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" placeholder="选择截止日期" /></el-form-item>
           </div>
           <el-form-item label="代码仓库绑定"><el-input v-model="form.repo_url" /></el-form-item>
         </el-form>
       </div>
 
       <div class="teamflow-card panel">
-        <div class="section-title">成员管理</div>
+        <div class="section-title">
+          <el-icon style="margin-right: 8px; color: #10B981; font-size: 20px; vertical-align: -3px;"><User /></el-icon>成员管理
+        </div>
         <div class="member-row" v-for="member in members" :key="member.user_id">
           <div class="member-info">
             <img :src="member.avatar" alt="avatar" />
@@ -40,7 +44,9 @@
       </div>
 
       <div class="teamflow-card panel">
-        <div class="section-title">邀请成员</div>
+        <div class="section-title">
+          <el-icon style="margin-right: 8px; color: #F59E0B; font-size: 20px; vertical-align: -3px;"><Message /></el-icon>邀请成员
+        </div>
         <el-form :model="inviteForm" label-position="top">
           <el-form-item label="搜索用户">
             <el-select v-model="inviteForm.invitee_id" filterable remote :remote-method="searchUsers" style="width: 100%">
@@ -53,12 +59,14 @@
           <el-form-item label="邀请说明">
             <el-input v-model="inviteForm.message" rows="4" type="textarea" />
           </el-form-item>
-          <el-button type="primary" @click="sendInvitation">发送邀请</el-button>
+          <el-button type="primary" @click="sendInvitation" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); border: none;">发送邀请</el-button>
         </el-form>
       </div>
 
       <div class="teamflow-card panel">
-        <div class="section-title">邀请记录</div>
+        <div class="section-title">
+          <el-icon style="margin-right: 8px; color: #8B5CF6; font-size: 20px; vertical-align: -3px;"><List /></el-icon>邀请记录
+        </div>
         <div class="invite-row" v-for="item in invitations" :key="item.id">
           <div>
             <div>{{ item.invitee?.name }}</div>
@@ -70,15 +78,17 @@
     </div>
 
     <div class="teamflow-card panel">
-      <div class="section-title">成员协作权限矩阵</div>
-      <el-table :data="permissionRows">
+      <div class="section-title">
+        <el-icon style="margin-right: 8px; color: #EF4444; font-size: 20px; vertical-align: -3px;"><Lock /></el-icon>成员协作权限矩阵
+      </div>
+      <el-table :data="permissionRows" stripe style="width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid #f1f5f9;">
         <el-table-column label="角色" prop="role" />
-        <el-table-column label="邀请成员" prop="invite" />
-        <el-table-column label="分配任务" prop="assign" />
-        <el-table-column label="查看审计" prop="audit" />
-        <el-table-column label="导出报告" prop="report" />
-        <el-table-column label="删除内容" prop="delete" />
-        <el-table-column label="项目设置" prop="settings" />
+        <el-table-column label="邀请成员" prop="invite" align="center" />
+        <el-table-column label="分配任务" prop="assign" align="center" />
+        <el-table-column label="查看审计" prop="audit" align="center" />
+        <el-table-column label="导出报告" prop="report" align="center" />
+        <el-table-column label="删除内容" prop="delete" align="center" />
+        <el-table-column label="项目设置" prop="settings" align="center" />
       </el-table>
     </div>
   </div>
@@ -86,6 +96,7 @@
 
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
+import { Setting, User, Message, List, Lock } from '@element-plus/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -179,13 +190,73 @@ onMounted(load)
 }
 
 .panel {
-  padding: 18px;
+  padding: 24px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 24px;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  transition: all 0.3s;
+}
+
+.save-btn:hover {
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+  transform: translateY(-1px);
+}
+
+:deep(.el-form-item__label) {
+  font-weight: 600;
+  color: #475569;
+}
+
+:deep(.el-input__wrapper), :deep(.el-textarea__inner) {
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+  transition: all 0.2s;
+  border-radius: 8px;
+}
+
+:deep(.el-input__wrapper:hover), :deep(.el-textarea__inner:hover) {
+  background-color: #FFFFFF;
+  border-color: #CBD5E1;
+}
+
+:deep(.el-input__wrapper.is-focus), :deep(.el-textarea__inner:focus) {
+  background-color: #FFFFFF;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
 }
 
 .member-row,
 .invite-row {
-  padding: 14px 0;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 16px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s;
+}
+
+.member-row:hover,
+.invite-row:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
 }
 
 .member-info {

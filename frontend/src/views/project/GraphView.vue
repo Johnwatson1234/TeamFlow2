@@ -1,11 +1,45 @@
 <template>
   <div class="graph-page" v-if="graph">
-    <div class="teamflow-card graph-filter">
-      <div class="section-title">筛选条件</div>
-      <el-input value="2024-04-19 ~ 2024-05-18" />
-      <el-select model-value="课程设计-小组协作管理系统">
-        <el-option label="课程设计-小组协作管理系统" value="课程设计-小组协作管理系统" />
-      </el-select>
+    <div class="graph-left-panel">
+      <div class="teamflow-card graph-filter">
+        <div class="section-title">筛选条件</div>
+        <div class="filter-item">
+          <label>协作时间跨度</label>
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            format="YYYY-MM-DD"
+            style="width: 100%;"
+          />
+        </div>
+        <div class="filter-item">
+          <label>项目数据源</label>
+          <el-select v-model="selectedProject" style="width: 100%;">
+            <el-option label="课程设计-小组协作管理系统" value="课程设计-小组协作管理系统" />
+          </el-select>
+        </div>
+      </div>
+
+      <div class="teamflow-card graph-overview">
+        <div class="section-title">图谱概览</div>
+        <div class="metric-card cyan">
+          <div class="metric-label">总节点数 (Nodes)</div>
+          <div class="metric-value">{{ graph.nodes.length }}</div>
+        </div>
+        <div class="metric-card indigo">
+          <div class="metric-label">关系连线 (Edges)</div>
+          <div class="metric-value">{{ graph.edges.length }}</div>
+        </div>
+        <div class="metric-card purple">
+          <div class="metric-label">网络密度 (Density)</div>
+          <div class="metric-value">
+            {{ (graph.edges.length / Math.max(1, graph.nodes.length * (graph.nodes.length - 1)) * 100).toFixed(1) }}%
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="graph-main">
@@ -64,6 +98,8 @@ import GraphCanvas from '@/components/common/GraphCanvas.vue'
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 const graph = ref<any>(null)
+const dateRange = ref(['2024-04-19', '2024-05-18'])
+const selectedProject = ref('课程设计-小组协作管理系统')
 
 const load = async () => {
   const { data } = await projectApi.graph(projectId.value)
@@ -80,10 +116,74 @@ onMounted(load)
   grid-template-columns: 220px 1fr;
 }
 
+.graph-left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 .graph-filter,
+.graph-overview,
 .graph-panel,
 .side-card {
   padding: 18px;
+}
+
+.graph-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-item label {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.filter-item :deep(.el-range-editor.el-input__wrapper) {
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+.filter-item :deep(.el-select .el-input__wrapper) {
+  border-radius: 8px;
+}
+
+.metric-card {
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 14px;
+  color: white;
+}
+
+.metric-card.cyan {
+  background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+}
+
+.metric-card.indigo {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+}
+
+.metric-card.purple {
+  background: linear-gradient(135deg, #A855F7 0%, #7E22CE 100%);
+}
+
+.metric-label {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 700;
 }
 
 .graph-main {

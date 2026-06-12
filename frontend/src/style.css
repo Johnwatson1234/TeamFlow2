@@ -2,30 +2,34 @@
 
 :root {
   /* Core Colors */
-  --bg: #FAFAFA;
-  --bg-dark: #F3F4F6;
+  --bg: #F8FAFC;
+  --bg-dark: #F1F5F9;
   --card: #FFFFFF;
-  --border: #EAEAEA;
-  --text: #11181C;
-  --text-muted: #687076;
-  --text-light: #8E969D;
+  --border: #E2E8F0;
+  --text: #0F172A;
+  --text-muted: #64748B;
+  --text-light: #94A3B8;
 
   /* Accent & Semantic */
   --primary: #4F46E5;
-  --primary-light: #818CF8;
+  --primary-light: #6366F1;
   --primary-dark: #3730A3;
   --cyan: #06B6D4;
-  --success: #10B981;
+  --success: #22C55E;
   --warning: #F59E0B;
   --danger: #EF4444;
   --ai: #8B5CF6;
+  --ai-ink: #0F172A;
+  --ai-cobalt: #4F46E5;
+  --ai-teal: #06B6D4;
   
-  /* Sidebar - Dark Minimalist */
-  --sidebar-bg: rgba(18, 18, 20, 0.98);
+  /* Sidebar - Modern SaaS */
+  --sidebar-bg: #1E1B4B;
   --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-text: #A1A1AA;
+  --sidebar-text: #C7D2FE;
   --sidebar-text-active: #FFFFFF;
-  --sidebar-item-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-item-hover: rgba(79, 70, 229, 0.2);
+  --sidebar-item-active-bg: rgba(79, 70, 229, 0.35);
 
   /* Shadows & Effects */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -109,8 +113,8 @@ img {
 .page-shell {
   min-height: 100%;
   background: 
-    radial-gradient(circle at 15% 50%, rgba(79, 70, 229, 0.04), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(6, 182, 212, 0.04), transparent 25%),
+    radial-gradient(circle at 15% 50%, rgba(79, 70, 229, 0.06), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.06), transparent 25%),
     var(--bg);
 }
 
@@ -184,8 +188,14 @@ img {
 
 .status-tag.purple {
   color: var(--ai);
-  background: rgba(139, 92, 246, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(13, 148, 136, 0.12);
+  border: 1px solid rgba(13, 148, 136, 0.2);
+}
+
+.status-tag.teal {
+  color: var(--ai-teal);
+  background: rgba(13, 148, 136, 0.12);
+  border: 1px solid rgba(13, 148, 136, 0.2);
 }
 
 .tiny-muted {

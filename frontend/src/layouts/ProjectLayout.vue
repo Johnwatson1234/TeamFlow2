@@ -47,11 +47,11 @@
           </el-button>
           <el-icon :size="20"><Operation /></el-icon>
           <div class="breadcrumb">
-            <span>项目空间</span>
-            <span>/</span>
-            <span>{{ currentProject?.name }}</span>
-            <span>/</span>
-            <strong>{{ pageLabel }}</strong>
+            <span class="crumb-link" @click="router.push('/projects')">项目空间</span>
+            <span class="crumb-sep">/</span>
+            <span class="crumb-link" @click="router.push(`/projects/${projectId}`)">{{ currentProject?.name || '加载中...' }}</span>
+            <span class="crumb-sep">/</span>
+            <span class="crumb-current">{{ pageLabel }}</span>
           </div>
         </div>
         <div class="topbar-right">
@@ -128,6 +128,7 @@
       </nav>
     </el-drawer>
   </AppViewport>
+  <AIAssistantDock v-if="projectId" />
 </template>
 
 <script setup lang="ts">
@@ -152,7 +153,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import AppViewport from '@/components/common/AppViewport.vue'
+import AIAssistantDock from '@/components/common/AIAssistantDock.vue'
 import { useNotificationStore } from '@/stores/notification'
+import { useAiStore } from '@/stores/ai'
 import { useProjectStore } from '@/stores/project'
 import { useUserStore } from '@/stores/user'
 
@@ -161,6 +164,7 @@ const router = useRouter()
 const projectStore = useProjectStore()
 const notificationStore = useNotificationStore()
 const userStore = useUserStore()
+const aiStore = useAiStore()
 const searchVisible = ref(false)
 const searchKeyword = ref('')
 const mobileNavVisible = ref(false)
@@ -232,6 +236,10 @@ const handleUserCommand = async (command: string) => {
 watch(projectId, bootstrap, { immediate: true })
 watch(() => route.fullPath, () => {
   mobileNavVisible.value = false
+  aiStore.setPageContext({
+    routeName: String(route.name || ''),
+    query: JSON.stringify(route.query),
+  })
 })
 onMounted(bootstrap)
 </script>
@@ -275,7 +283,7 @@ onMounted(bootstrap)
   height: 32px;
   border-radius: 8px;
   place-items: center;
-  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+  background: linear-gradient(135deg, #4F46E5 0%, #8B5CF6 100%);
   color: #fff;
   font-weight: 800;
   box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
@@ -287,15 +295,15 @@ onMounted(bootstrap)
   align-items: center;
   padding: 12px;
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .project-switch:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .switch-icon {
@@ -304,15 +312,15 @@ onMounted(bootstrap)
   height: 36px;
   border-radius: 10px;
   place-items: center;
-  color: white;
+  color: #fff;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .switch-name {
   font-size: 14px;
   font-weight: 500;
-  color: white;
+  color: #fff;
 }
 
 .switch-status {
@@ -343,7 +351,7 @@ onMounted(bootstrap)
   padding-right: 4px;
 }
 .sidebar-nav::-webkit-scrollbar { width: 4px; }
-.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
 
 .nav-item,
 .reminder-shortcut {
@@ -367,8 +375,8 @@ onMounted(bootstrap)
 .nav-item.active,
 .reminder-shortcut.active {
   color: var(--sidebar-text-active);
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: inset 2px 0 0 var(--primary);
+  background: var(--sidebar-item-active-bg);
+  box-shadow: inset 2px 0 0 var(--primary-light);
 }
 
 .nav-item:hover:not(.active),
@@ -406,14 +414,14 @@ onMounted(bootstrap)
   align-items: center;
   padding: 12px;
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .sidebar-user:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-user img,
@@ -467,18 +475,34 @@ onMounted(bootstrap)
 }
 
 .breadcrumb {
+  display: flex;
+  align-items: center;
   color: var(--text-muted);
   font-size: 14px;
   font-weight: 500;
 }
 
-.breadcrumb span:not(:last-child) {
-  opacity: 0.7;
+.crumb-link {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 
-.breadcrumb strong {
+.crumb-link:hover {
+  color: var(--primary);
+  background: rgba(79, 70, 229, 0.08);
+}
+
+.crumb-sep {
+  margin: 0 2px;
+  opacity: 0.5;
+}
+
+.crumb-current {
   color: var(--text);
   font-weight: 600;
+  padding: 4px 8px;
 }
 
 .topbar-right {

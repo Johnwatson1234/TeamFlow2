@@ -12,22 +12,22 @@
     </div>
 
     <div class="summary-grid">
-      <div class="teamflow-card summary-card">
+      <div class="teamflow-card summary-card dark" style="background: linear-gradient(135deg, #F472B6 0%, #DB2777 100%)">
         <div class="tiny-muted">分析方式</div>
         <div class="metric-value">{{ analysisModeLabel }}</div>
         <div class="tiny-muted">生成时间：{{ payload.summary?.generated_at }}</div>
       </div>
-      <div class="teamflow-card summary-card">
+      <div class="teamflow-card summary-card dark" style="background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)">
         <div class="tiny-muted">讨论消息</div>
         <div class="metric-value">{{ payload.summary?.message_count || 0 }}</div>
         <div class="tiny-muted">当前项目群与任务讨论累计消息</div>
       </div>
-      <div class="teamflow-card summary-card">
+      <div class="teamflow-card summary-card dark" style="background: linear-gradient(135deg, #22D3EE 0%, #0891B2 100%)">
         <div class="tiny-muted">有效想法</div>
         <div class="metric-value">{{ payload.summary?.idea_message_count || 0 }}</div>
         <div class="tiny-muted">识别为建议、方案、风险提示的讨论发言</div>
       </div>
-      <div class="teamflow-card summary-card">
+      <div class="teamflow-card summary-card dark" style="background: linear-gradient(135deg, #818CF8 0%, #4F46E5 100%)">
         <div class="tiny-muted">完成任务</div>
         <div class="metric-value">{{ payload.summary?.completed_task_count || 0 }}</div>
         <div class="tiny-muted">系统内有闭环记录的任务完成数</div>
@@ -295,9 +295,15 @@ onMounted(load)
 }
 
 .summary-card {
-  background:
-    radial-gradient(circle at top right, rgba(79, 70, 229, 0.12), transparent 35%),
-    #fff;
+  /* background overriden by inline styles for dynamic gradient */
+}
+
+.summary-card.dark {
+  color: #fff;
+  border: none;
+}
+.summary-card.dark .tiny-muted {
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 .panel-head {

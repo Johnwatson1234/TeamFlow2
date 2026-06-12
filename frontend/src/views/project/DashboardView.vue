@@ -13,14 +13,14 @@
     </div>
 
     <section class="grid-4">
-      <StatCard title="任务完成率" :value="`${dashboard.stats.completion_rate}%`" :footer="`已完成 ${dashboard.stats.completed_count} / ${dashboard.stats.task_total}`" :icon="PieChart" tint="rgba(79,70,229,.12)" icon-color="#2563eb" />
-      <StatCard title="进行中任务" :value="dashboard.stats.in_progress_count" :footer="'较上周 ↓ 2'" :icon="DocumentChecked" tint="rgba(99,102,241,.12)" icon-color="#4f46e5" />
-      <StatCard title="延期任务" :value="dashboard.stats.delayed_count" :footer="'较上周 ↑ 1'" :icon="Clock" tint="rgba(239,68,68,.08)" icon-color="#ef4444" />
-      <StatCard title="项目成员" :value="dashboard.stats.member_count" :footer="'活跃成员 7'" :icon="UserFilled" tint="rgba(139,92,246,.12)" icon-color="#8b5cf6" />
-      <StatCard title="协作文档" :value="dashboard.stats.document_count" :footer="'较上周 ↑ 3'" :icon="Files" tint="rgba(34,197,94,.12)" icon-color="#22c55e" />
-      <StatCard title="协作事件" :value="dashboard.stats.event_count" :footer="'较上周 ↑ 18'" :icon="Connection" tint="rgba(249,115,22,.12)" icon-color="#f97316" />
-      <StatCard title="待处理邀请" :value="dashboard.stats.pending_invitation_count" :footer="'成员加入待确认'" :icon="Bell" tint="rgba(245,158,11,.12)" icon-color="#f59e0b" />
-      <StatCard title="未读提醒" :value="dashboard.stats.unread_count" :footer="'点击右上角快速查看'" :icon="Message" tint="rgba(59,130,246,.12)" icon-color="#3b82f6" />
+      <StatCard theme="dark" title="任务完成率" :value="`${dashboard.stats.completion_rate}%`" :footer="`已完成 ${dashboard.stats.completed_count} / ${dashboard.stats.task_total}`" :icon="PieChart" bg="linear-gradient(135deg, #F472B6 0%, #DB2777 100%)" />
+      <StatCard theme="dark" title="进行中任务" :value="dashboard.stats.in_progress_count" :footer="'较上周 ↓ 2'" :icon="DocumentChecked" bg="linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)" />
+      <StatCard theme="dark" title="延期任务" :value="dashboard.stats.delayed_count" :footer="'较上周 ↑ 1'" :icon="Clock" bg="linear-gradient(135deg, #22D3EE 0%, #0891B2 100%)" />
+      <StatCard theme="dark" title="项目成员" :value="dashboard.stats.member_count" :footer="'活跃成员 7'" :icon="UserFilled" bg="linear-gradient(135deg, #818CF8 0%, #4F46E5 100%)" />
+      <StatCard theme="dark" title="协作文档" :value="dashboard.stats.document_count" :footer="'较上周 ↑ 3'" :icon="Files" bg="linear-gradient(135deg, #34D399 0%, #059669 100%)" />
+      <StatCard theme="dark" title="协作事件" :value="dashboard.stats.event_count" :footer="'较上周 ↑ 18'" :icon="Connection" bg="linear-gradient(135deg, #FB923C 0%, #EA580C 100%)" />
+      <StatCard theme="dark" title="待处理邀请" :value="dashboard.stats.pending_invitation_count" :footer="'成员加入待确认'" :icon="Bell" bg="linear-gradient(135deg, #FBBF24 0%, #D97706 100%)" />
+      <StatCard theme="dark" title="未读提醒" :value="dashboard.stats.unread_count" :footer="'点击右上角快速查看'" :icon="Message" bg="linear-gradient(135deg, #FB7185 0%, #E11D48 100%)" />
     </section>
 
     <section class="dashboard-grid">

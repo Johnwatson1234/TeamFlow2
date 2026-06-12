@@ -2,11 +2,12 @@
   <div class="editor-page" v-if="document">
     <aside class="teamflow-card tree-pane">
       <div class="section-title">文档目录</div>
-      <div class="search-box"><el-input placeholder="搜索文档标题" /></div>
+      <div class="search-box"><el-input placeholder="搜索文档标题"><template #prefix><el-icon><Search /></el-icon></template></el-input></div>
       <div class="tree-group">
         <div class="group-title">课程设计文档</div>
         <div class="tree-item" v-for="item in allDocuments" :key="item.id" :class="{ active: item.id === document.id }" @click="router.push(`/projects/${projectId}/documents/${item.id}`)">
-          {{ item.title }}
+          <el-icon><Document /></el-icon>
+          <span class="text-truncate" style="flex: 1;">{{ item.title }}</span>
         </div>
       </div>
     </aside>
@@ -24,13 +25,28 @@
         </div>
       </div>
       <div class="toolbar">
-        <span>文件</span>
-        <span>编辑</span>
-        <span>插入</span>
-        <span>格式</span>
-        <span>视图</span>
-        <span>表格</span>
-        <span>帮助</span>
+        <div class="toolbar-group">
+          <el-tooltip content="撤销" placement="top"><el-icon><RefreshLeft /></el-icon></el-tooltip>
+          <el-tooltip content="重做" placement="top"><el-icon><RefreshRight /></el-icon></el-tooltip>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+          <el-tooltip content="标题" placement="top"><div class="toolbar-btn text-icon">H1</div></el-tooltip>
+          <el-tooltip content="副标题" placement="top"><div class="toolbar-btn text-icon">H2</div></el-tooltip>
+          <el-tooltip content="正文" placement="top"><div class="toolbar-btn text-icon">P</div></el-tooltip>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+          <el-tooltip content="加粗" placement="top"><div class="toolbar-btn" style="font-weight: 800;">B</div></el-tooltip>
+          <el-tooltip content="斜体" placement="top"><div class="toolbar-btn" style="font-style: italic;">I</div></el-tooltip>
+          <el-tooltip content="下划线" placement="top"><div class="toolbar-btn" style="text-decoration: underline;">U</div></el-tooltip>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+          <el-tooltip content="插入图片" placement="top"><el-icon><Picture /></el-icon></el-tooltip>
+          <el-tooltip content="插入链接" placement="top"><el-icon><Link /></el-icon></el-tooltip>
+          <el-tooltip content="插入表格" placement="top"><el-icon><Grid /></el-icon></el-tooltip>
+        </div>
       </div>
       <div class="editor-content">
         <el-input v-model="document.title" class="title-input" />
@@ -74,6 +90,7 @@
 
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
+import { Document, RefreshLeft, RefreshRight, Picture, Link, Grid, Search } from '@element-plus/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -149,15 +166,26 @@ onMounted(load)
 }
 
 .tree-item {
-  padding: 12px 14px;
-  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
   cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 4px;
+  color: #475569;
 }
-
+.tree-item:hover {
+  background: #F1F5F9;
+}
 .tree-item.active {
-  background: rgba(79, 70, 229, 0.08);
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
   color: var(--primary);
-  font-weight: 700;
+  font-weight: 600;
+}
+.tree-item .el-icon {
+  font-size: 16px;
 }
 
 .editor-head,
@@ -172,21 +200,77 @@ onMounted(load)
 
 .toolbar {
   display: flex;
-  gap: 22px;
-  padding: 14px 0;
-  border-top: 1px solid #eef2ff;
-  border-bottom: 1px solid #eef2ff;
-  color: var(--text-muted);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  margin: 16px 0;
+  overflow-x: auto;
 }
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #64748B;
+  font-size: 18px;
+}
+.toolbar-group .el-icon, .toolbar-btn {
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.toolbar-group .el-icon:hover, .toolbar-btn:hover {
+  background: #E2E8F0;
+  color: var(--primary);
+}
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: #E2E8F0;
+}
+.text-icon { font-size: 14px; font-weight: 700; width: 28px; height: 28px; }
 
 .editor-content {
   flex: 1;
   min-height: 0;
-  padding: 18px 0;
+  padding: 24px 40px;
+  margin: 0 auto;
+  max-width: 800px;
+  width: 100%;
 }
 
 .title-input {
   margin-bottom: 18px;
+}
+
+.title-input :deep(.el-input__wrapper) {
+  box-shadow: none !important;
+  background: transparent;
+  padding: 0;
+}
+.title-input :deep(input) {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+  border: none;
+  height: auto;
+  line-height: 1.2;
+}
+
+.editor-content :deep(.el-textarea__inner) {
+  box-shadow: none !important;
+  background: transparent;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #334155;
+  border: none;
 }
 
 .comment-list,
@@ -196,11 +280,25 @@ onMounted(load)
   gap: 14px;
 }
 
-.comment-item,
-.version-item {
-  padding: 14px;
-  border: 1px solid #eef2ff;
+.comment-item {
+  padding: 16px;
+  background: #F8FAFC;
+  border: 1px solid rgba(15,23,42,0.04);
   border-radius: 14px;
+  transition: all 0.2s;
+}
+.comment-item:hover {
+  border-color: rgba(99,102,241,0.2);
+  box-shadow: 0 4px 12px rgba(99,102,241,0.05);
+}
+
+.version-item {
+  padding: 16px;
+  background: #FFFFFF;
+  border: 1px solid rgba(15,23,42,0.06);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.02);
+  border-left: 4px solid var(--primary);
 }
 
 @media (max-width: 1200px) {

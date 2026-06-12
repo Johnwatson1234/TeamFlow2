@@ -28,19 +28,19 @@
           基于消息讨论、任务闭环、文档沉淀和技术输出，对每位成员生成协作风格、性格倾向和适配岗位建议。
         </div>
         <div class="hero-metrics">
-          <div class="hero-metric">
+          <div class="hero-metric dark" style="background: linear-gradient(135deg, #F472B6 0%, #DB2777 100%)">
             <label>分析模式</label>
             <strong>{{ payload.summary?.analysis_mode === 'llm' ? '智谱大模型' : '本地兜底分析' }}</strong>
           </div>
-          <div class="hero-metric">
+          <div class="hero-metric dark" style="background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)">
             <label>覆盖成员</label>
             <strong>{{ payload.summary?.member_count || 0 }}</strong>
           </div>
-          <div class="hero-metric">
+          <div class="hero-metric dark" style="background: linear-gradient(135deg, #22D3EE 0%, #0891B2 100%)">
             <label>讨论消息</label>
             <strong>{{ payload.summary?.message_count || 0 }}</strong>
           </div>
-          <div class="hero-metric">
+          <div class="hero-metric dark" style="background: linear-gradient(135deg, #818CF8 0%, #4F46E5 100%)">
             <label>生成时间</label>
             <strong>{{ payload.summary?.generated_at }}</strong>
           </div>
@@ -158,6 +158,20 @@
             </div>
           </div>
         </div>
+
+        <div class="teamflow-card process-panel">
+          <div class="section-title">AI 量化评估标准与得分归因</div>
+          <div class="process-grid">
+            <div class="echart-container">
+              <div class="tiny-muted chart-title">核心岗位匹配度</div>
+              <div class="echart-box" ref="gaugeChartRef"></div>
+            </div>
+            <div class="echart-container">
+              <div class="tiny-muted chart-title">多模态解析得分分布</div>
+              <div class="echart-box" ref="barChartRef"></div>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
     </div>
@@ -166,8 +180,9 @@
 
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import * as echarts from 'echarts'
 
 import { projectApi } from '@/api'
 import RadarChart from '@/components/common/RadarChart.vue'
@@ -207,6 +222,8 @@ const simulateAiAnalysis = async () => {
   await new Promise(r => setTimeout(r, 800))
   isAnalyzing.value = false
 }
+
+void simulateAiAnalysis
 
 const selectedProfile = computed(() => {
   const profiles = payload.value?.member_profiles || []
@@ -248,7 +265,102 @@ watch(selectedProfile, (newVal) => {
   typeText(newVal.career_recommendation || '', animatedRecommendation)
   typeText(newVal.communication_style || '', animatedCommunication)
   typeText(newVal.contribution_summary || '', animatedSummary)
+  
+  nextTick(renderCharts)
 }, { immediate: true })
+
+// ECharts Logic
+const gaugeChartRef = ref<HTMLElement | null>(null)
+const barChartRef = ref<HTMLElement | null>(null)
+const gaugeChart = shallowRef<echarts.ECharts | null>(null)
+const barChart = shallowRef<echarts.ECharts | null>(null)
+
+const renderCharts = () => {
+  if (!gaugeChartRef.value || !barChartRef.value || !selectedProfile.value) return
+  
+  if (!gaugeChart.value) gaugeChart.value = echarts.init(gaugeChartRef.value)
+  if (!barChart.value) barChart.value = echarts.init(barChartRef.value)
+  
+  const score = selectedProfile.value.total_score || 85
+  gaugeChart.value.setOption({
+    series: [
+      {
+        type: 'gauge',
+        startAngle: 180,
+        endAngle: 0,
+        center: ['50%', '75%'],
+        radius: '90%',
+        min: 0,
+        max: 100,
+        splitNumber: 8,
+        axisLine: {
+          lineStyle: {
+            width: 6,
+            color: [
+              [0.3, '#f59e0b'],
+              [0.7, '#3b82f6'],
+              [1, '#10b981']
+            ]
+          }
+        },
+        pointer: {
+          icon: 'path://M12.8,0.7l12,40.1H0.7L12.8,0.7z',
+          length: '12%',
+          width: 20,
+          offsetCenter: [0, '-60%'],
+          itemStyle: { color: 'auto' }
+        },
+        axisTick: { length: 12, lineStyle: { color: 'auto', width: 2 } },
+        splitLine: { length: 20, lineStyle: { color: 'auto', width: 5 } },
+        axisLabel: { color: '#464646', fontSize: 14, distance: -60 },
+        title: { offsetCenter: [0, '-20%'], fontSize: 14 },
+        detail: { fontSize: 30, offsetCenter: [0, '0%'], valueAnimation: true, formatter: '{value}%', color: 'auto' },
+        data: [{ value: score, name: '匹配度' }]
+      }
+    ]
+  })
+  
+  const radarItems = selectedProfile.value.radar || []
+  const xData = radarItems.map((item: any) => item.label)
+  const yData = radarItems.map((item: any) => item.value)
+  
+  barChart.value.setOption({
+    grid: { left: '3%', right: '4%', bottom: '3%', top: '15%', containLabel: true },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    xAxis: { type: 'category', data: xData, axisLabel: { interval: 0, rotate: 30, fontSize: 11, color: '#687076' }, axisTick: { show: false }, axisLine: { lineStyle: { color: '#EAEAEA' } } },
+    yAxis: { type: 'value', max: 100, splitLine: { lineStyle: { type: 'dashed', color: '#F4F4F5' } } },
+    series: [
+      {
+        type: 'bar',
+        data: yData,
+        barWidth: '40%',
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#818CF8' },
+            { offset: 1, color: '#4F46E5' }
+          ]),
+          borderRadius: [4, 4, 0, 0]
+        },
+        animationDuration: 1500,
+        animationEasing: 'cubicOut'
+      }
+    ]
+  })
+}
+
+const handleResize = () => {
+  gaugeChart.value?.resize()
+  barChart.value?.resize()
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  gaugeChart.value?.dispose()
+  barChart.value?.dispose()
+})
 
 const applyPayload = (data: any) => {
   payload.value = data
@@ -263,15 +375,11 @@ const applyPayload = (data: any) => {
 }
 
 const load = async () => {
-  if (!payload.value) {
-    await simulateAiAnalysis()
-  }
   const { data } = await projectApi.contribution(projectId.value)
   applyPayload(data)
 }
 
 const recalculate = async () => {
-  await simulateAiAnalysis()
   const { data } = await projectApi.recalculateContribution(projectId.value)
   applyPayload(data)
   ElMessage.success('成员画像已深度更新')
@@ -420,10 +528,19 @@ onMounted(load)
 }
 
 .hero-metric {
-  padding: 14px 16px;
-  border: 1px solid #e8efff;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+}
+
+.hero-metric.dark {
+  color: #fff;
+  border: none;
+}
+.hero-metric.dark label {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .hero-metric label,
@@ -514,14 +631,44 @@ onMounted(load)
 
 .spotlight-grid,
 .detail-grid,
-.metric-grid {
+.metric-grid,
+.process-grid {
   display: grid;
   gap: 14px;
 }
 
 .spotlight-grid,
-.detail-grid {
+.detail-grid,
+.process-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.process-panel {
+  padding: 20px;
+}
+
+.process-grid {
+  margin-top: 16px;
+}
+
+.echart-container {
+  border: 1px solid #eef2ff;
+  border-radius: 16px;
+  background: #fff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-title {
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.echart-box {
+  width: 100%;
+  height: 240px;
 }
 
 .spotlight-grid {

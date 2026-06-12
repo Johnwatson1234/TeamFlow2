@@ -1,146 +1,360 @@
 <template>
   <div class="ai-page">
-    <div class="ai-main">
-      <div class="teamflow-card ai-chat">
-        <div class="thread-title">TeamFlow AI 助手</div>
-        <div class="page-desc">你好，我是你的 AI 项目经理。我可以帮你进行任务拆解与规划、制定进度计划、风险识别与建议、生成项目报告。</div>
-        <div class="chat-bubbles app-scroll" style="max-height: 400px; overflow-y: auto;">
-          <div class="bubble assistant">请帮我为 {{ projectStore.currentProject?.name || '当前项目' }} 制定详细的任务规划，并给出里程碑建议和风险提示。</div>
-          <div v-for="(msg, idx) in chatHistory" :key="idx" :class="['bubble', msg.role]">
-            {{ msg.content }}
-          </div>
-          <div class="bubble assistant typing" v-if="isGenerating">
-            <span></span><span></span><span></span>
+    <section class="ai-main">
+      <div class="teamflow-card hero-card">
+        <div>
+          <div class="hero-kicker">Mimo 实时分析工作台</div>
+          <h1 class="page-title">AI 助手</h1>
+          <div class="page-desc">
+            这里的规划、周报、对话和操作都直接由 `mimo-v2.5-pro` 结合当前项目数据实时生成，不再使用本地拼装结果。
           </div>
         </div>
-        <el-input v-model="prompt" :rows="4" type="textarea" placeholder="输入你想让 AI 协助的内容..." @keyup.enter.ctrl="generate" />
-        <div class="editor-actions" style="margin-top: 12px;">
-          <div class="tiny-muted">AI 生成内容仅供参考，请结合实际情况判断 (Ctrl+Enter 发送)</div>
-          <el-button type="primary" :loading="isGenerating" @click="generate">发送</el-button>
+        <div class="hero-actions">
+          <el-button :loading="planningLoading" type="primary" @click="generatePlan">生成任务规划</el-button>
+          <el-button :loading="reportLoading" @click="generateWeeklyReport">生成周报</el-button>
         </div>
       </div>
 
-      <div class="teamflow-card ai-result" v-if="result">
-        <div class="panel-header">
-          <div class="thread-title">AI 任务规划结果</div>
-          <div class="editor-actions">
-            <el-button @click="confirmPlan">确认写入项目</el-button>
-            <el-button type="primary" @click="weeklyReport">生成周报</el-button>
+      <div class="ai-skills-row">
+        <div class="skill-card pink" @click="chatPrompt = '帮我做代码审查'; sendChat()">
+          <div class="skill-icon">🧐</div>
+          <div class="skill-title">代码审查</div>
+          <div class="skill-desc">自动扫描近期提交</div>
+        </div>
+        <div class="skill-card purple" @click="chatPrompt = '帮我进行需求拆解'; sendChat()">
+          <div class="skill-icon">📋</div>
+          <div class="skill-title">需求拆解</div>
+          <div class="skill-desc">一键将文档转为任务</div>
+        </div>
+        <div class="skill-card cyan" @click="chatPrompt = '帮我分析项目进度风险'; sendChat()">
+          <div class="skill-icon">⚡</div>
+          <div class="skill-title">风险诊断</div>
+          <div class="skill-desc">识别阻塞点与瓶颈</div>
+        </div>
+        <div class="skill-card indigo" @click="generateWeeklyReport">
+          <div class="skill-icon">📝</div>
+          <div class="skill-title">智能周报</div>
+          <div class="skill-desc">基于数据生成简报</div>
+        </div>
+      </div>
+
+      <div class="ai-chat-grid">
+        <div class="teamflow-card chat-panel">
+          <div class="panel-head">
+            <div>
+              <div class="section-title">实时对话</div>
+              <div class="tiny-muted">AI 会自动携带当前页面和项目上下文</div>
+            </div>
+            <span class="status-tag teal">SSE</span>
+          </div>
+
+          <div ref="messageScroller" class="chat-list app-scroll">
+            <div v-for="message in chatMessages" :key="message.localId" :class="['chat-bubble', message.role]">
+              <div class="bubble-head">
+                <strong>{{ message.role === 'user' ? '你' : 'TeamFlow AI' }}</strong>
+                <span class="tiny-muted">{{ message.time }}</span>
+              </div>
+              <div class="bubble-copy">{{ message.content }}</div>
+              <div v-if="message.actions?.length" class="chip-row">
+                <span v-for="(item, index) in message.actions" :key="`${message.localId}-${index}`" class="action-chip">
+                  {{ actionLabel(item.type) }}
+                </span>
+              </div>
+            </div>
+            <div v-if="chatStreaming" class="chat-bubble assistant streaming">
+              <div class="bubble-head">
+                <strong>TeamFlow AI</strong>
+                <span class="tiny-muted">{{ streamStatus || '正在生成' }}</span>
+              </div>
+              <div class="bubble-copy">{{ streamedReply || '正在分析项目上下文…' }}</div>
+            </div>
+          </div>
+
+          <div class="ai-composer-wrapper">
+            <el-input
+              v-model="chatPrompt"
+              :rows="3"
+              :autosize="{ minRows: 3, maxRows: 8 }"
+              type="textarea"
+              placeholder="告诉 Mimo 你需要做什么，例如：帮我分析当前的风险点..."
+              @keyup.enter.ctrl="sendChat"
+            />
+            <div class="composer-bar">
+              <div class="tiny-muted">Ctrl + Enter 发送，AI 可读取当前上下文</div>
+              <el-button :loading="chatStreaming" type="primary" round @click="sendChat">发送</el-button>
+            </div>
           </div>
         </div>
-        <div class="result-scroll app-scroll">
-          <div class="phase-track">
-            <div v-for="phase in result.phases" :key="phase.step" class="phase-node">
-              <div class="phase-index">{{ phase.step }}</div>
-              <div class="phase-title">{{ phase.title }}</div>
-              <div class="tiny-muted">{{ phase.date }}</div>
+
+        <aside class="teamflow-card context-panel">
+          <div class="panel-head">
+            <div class="section-title">当前项目上下文</div>
+            <span class="status-tag blue">实时</span>
+          </div>
+          <div class="context-grid">
+            <div class="context-card">
+              <label>项目名称</label>
+              <strong>{{ projectStore.currentProject?.name || '当前项目' }}</strong>
+            </div>
+            <div class="context-card">
+              <label>截止日期</label>
+              <strong>{{ projectStore.currentProject?.due_date || '未设置' }}</strong>
+            </div>
+            <div class="context-card">
+              <label>当前路由</label>
+              <strong>{{ route.path }}</strong>
+            </div>
+            <div class="context-card">
+              <label>页面上下文</label>
+              <strong>{{ contextSummary }}</strong>
             </div>
           </div>
-          <el-table :data="result.tasks">
-            <el-table-column label="任务名称" prop="name" min-width="180" />
-            <el-table-column label="负责人" prop="owner" width="100" />
-            <el-table-column label="优先级" prop="priority" width="100" />
-            <el-table-column label="预计工时" prop="hours" width="100" />
-            <el-table-column label="截止日期" prop="deadline" width="100" />
-            <el-table-column label="状态" prop="status" width="100" />
-          </el-table>
-          <div class="grid-2 ai-section-grid">
-            <div class="teamflow-card inner-card">
-              <div class="section-title">进度建议</div>
-              <ul class="suggestion-list app-scroll">
-                <li v-for="item in result.suggestions" :key="item">{{ item }}</li>
-              </ul>
+
+          <div class="side-section">
+            <div class="section-title">快捷请求</div>
+            <div class="quick-grid">
+              <button v-for="item in quickPrompts" :key="item.label" type="button" class="quick-card" @click="chatPrompt = item.prompt">
+                {{ item.label }}
+              </button>
             </div>
-            <div class="teamflow-card inner-card">
-              <div class="section-title">风险提示</div>
-              <div class="risk-table-wrap app-scroll">
-                <el-table :data="result.risks">
-                  <el-table-column label="风险项" prop="name" />
-                  <el-table-column label="等级" prop="level" width="90" />
-                  <el-table-column label="建议" prop="suggestion" min-width="160" />
-                </el-table>
+          </div>
+
+          <div v-if="actionResults.length" class="side-section">
+            <div class="section-title">最近自动操作</div>
+            <div class="result-list">
+              <div v-for="(item, index) in actionResults" :key="`${item.type}-${index}`" class="result-row">
+                <div>
+                  <strong>{{ actionLabel(item.type) }}</strong>
+                  <div class="tiny-muted">{{ item.result?.message || '已执行' }}</div>
+                </div>
+                <span :class="['status-tag', item.status === 'ok' ? 'green' : 'red']">
+                  {{ item.status === 'ok' ? '成功' : '失败' }}
+                </span>
               </div>
             </div>
           </div>
+        </aside>
+      </div>
+
+      <div v-if="planResult || weeklyReport" class="result-grid">
+        <div v-if="planResult" class="teamflow-card result-panel">
+          <div class="panel-head">
+            <div class="section-title">AI 任务规划</div>
+            <el-button v-if="suggestionId" @click="confirmPlan">确认写入项目</el-button>
+          </div>
+          <div class="result-summary">{{ planResult.summary }}</div>
+          <div class="phase-track">
+            <div v-for="phase in planResult.phases || []" :key="`${phase.step}-${phase.title}`" class="phase-card">
+              <div class="phase-step">{{ phase.step }}</div>
+              <strong>{{ phase.title }}</strong>
+              <span class="tiny-muted">{{ phase.date }}</span>
+            </div>
+          </div>
+          <el-table :data="planResult.tasks || []">
+            <el-table-column label="任务" prop="name" min-width="180" />
+            <el-table-column label="负责人" prop="owner" width="120" />
+            <el-table-column label="优先级" prop="priority" width="110" />
+            <el-table-column label="截止时间" prop="deadline" width="140" />
+          </el-table>
+        </div>
+
+        <div v-if="weeklyReport" class="teamflow-card result-panel">
+          <div class="panel-head">
+            <div class="section-title">AI 周报</div>
+            <span class="status-tag teal">实时生成</span>
+          </div>
+          <div class="report-copy">{{ weeklyReport }}</div>
         </div>
       </div>
-    </div>
-
-    <aside class="ai-side teamflow-card">
-      <div class="section-title">项目概览（实时）</div>
-      <div class="repo-item"><label>当前阶段</label><span>系统设计</span></div>
-      <div class="repo-item"><label>整体进度</label><span>28%</span></div>
-      <div class="repo-item"><label>已完成任务</label><span>12 / 43</span></div>
-      <div class="repo-item"><label>延期任务</label><span>2</span></div>
-      <div class="repo-item"><label>项目截止</label><span>2024-06-12（剩余 25 天）</span></div>
-      <div class="section-title side-gap">智能快捷入口</div>
-      <div class="quick-grid">
-        <div class="quick-card">任务拆解</div>
-        <div class="quick-card">进度建议</div>
-        <div class="quick-card">风险扫描</div>
-        <div class="quick-card">周报生成</div>
-      </div>
-      <div class="section-title side-gap">历史对话</div>
-      <div class="history-item">为项目制定任务规划</div>
-      <div class="history-item">给出下周工作建议</div>
-      <div class="history-item">生成本周项目周报</div>
-    </aside>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
-import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, nextTick, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-import { aiApi } from '@/api'
+import { aiApi, streamAiChat } from '@/api'
+import { useAiStore } from '@/stores/ai'
 import { useProjectStore } from '@/stores/project'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
+const router = useRouter()
+const aiStore = useAiStore()
 const projectStore = useProjectStore()
-const projectId = computed(() => route.params.id as string)
-const prompt = ref('请帮我拆解当前阶段任务，并给出风险建议。')
-const result = ref<any>(null)
-const suggestionId = ref<number | null>(null)
-const isGenerating = ref(false)
-const chatHistory = ref<{role: string, content: string}[]>([])
+const userStore = useUserStore()
 
-const generate = async () => {
-  if (!prompt.value.trim() || isGenerating.value) return
-  
-  const userPrompt = prompt.value
-  chatHistory.value.push({ role: 'user', content: userPrompt })
-  prompt.value = ''
-  isGenerating.value = true
-  result.value = null // 清空旧结果以展示动画
-  
+const chatPrompt = ref('请结合当前项目上下文，总结最值得优先推进的工作，并在合适时直接帮我整理任务。')
+const chatStreaming = ref(false)
+const streamStatus = ref('')
+const streamedReply = ref('')
+const messageScroller = ref<HTMLElement | null>(null)
+const chatMessages = ref<Array<{ localId: string; role: 'user' | 'assistant'; content: string; time: string; actions?: any[] }>>([])
+const actionResults = ref<any[]>([])
+const planningLoading = ref(false)
+const reportLoading = ref(false)
+const suggestionId = ref<number | null>(null)
+const planResult = ref<any>(null)
+const weeklyReport = ref('')
+
+const quickPrompts = [
+  { label: '总结项目现状', prompt: '请总结当前项目状态、关键风险和最需要推进的事项。' },
+  { label: '自动拆任务', prompt: '请根据当前项目真实数据生成一版任务规划，并在必要时给出可执行建议。' },
+  { label: '推进任务状态', prompt: '如果当前任务列表中有明显滞后的事项，请直接提出并执行合理的非破坏性更新。' },
+  { label: '生成周报', prompt: '请结合当前项目数据生成周报，并写入系统留痕。' },
+]
+
+const contextSummary = computed(() => {
+  const entries = Object.entries(aiStore.pageContext || {}).filter(([, value]) => value !== '' && value !== null && value !== undefined)
+  return entries.length ? entries.slice(0, 3).map(([key, value]) => `${key}:${String(value)}`).join(' / ') : 'AI 工作台'
+})
+
+const actionLabel = (type: string) => ({
+  navigate_page: '页面导航',
+  open_task: '打开任务',
+  open_document: '打开文档',
+  open_file: '打开文件',
+  create_task: '创建任务',
+  update_task: '更新任务',
+  accept_task: '开始任务',
+  block_task: '阻塞任务',
+  complete_task: '完成任务',
+  create_milestone: '创建里程碑',
+  generate_weekly_report: '生成周报',
+  scan_risks: '风险扫描',
+  recalculate_contribution: '重算贡献分析',
+}[type] || type)
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    setTimeout(() => {
+      if (messageScroller.value) {
+        messageScroller.value.scrollTo({
+          top: messageScroller.value.scrollHeight,
+          behavior: 'smooth'
+        })
+      }
+    }, 50)
+  })
+}
+
+const loadConversation = async () => {
+  const { data } = await aiApi.conversation(route.params.id as string)
+  chatMessages.value = (data.messages || []).map((item: any) => ({
+    localId: `server-${item.id}`,
+    role: item.sender?.name === 'TeamFlow AI' || item.message_type === 'ai' || item.message_type === 'ai_action' ? 'assistant' : 'user',
+    content: item.content,
+    time: item.created_at?.slice(11, 16) || '--:--',
+    actions: item.metadata?.actions || (item.message_type === 'ai_action' ? [item.metadata] : []),
+  }))
+  scrollToBottom()
+}
+
+const applyUiAction = async (item: any) => {
+  const params = item.params || {}
+  if (item.type === 'navigate_page' && (params.path || item.result?.path)) {
+    await router.push(params.path || item.result.path)
+  } else if (item.type === 'open_task' && params.task_id) {
+    await router.push(`/projects/${route.params.id}/tasks?taskId=${params.task_id}`)
+  } else if (item.type === 'open_document' && params.document_id) {
+    await router.push(`/projects/${route.params.id}/documents/${params.document_id}`)
+  } else if (item.type === 'open_file' && params.file_id) {
+    await router.push(`/projects/${route.params.id}/files?fileId=${params.file_id}`)
+  }
+}
+
+const sendChat = async () => {
+  if (!chatPrompt.value.trim() || chatStreaming.value) return
+  const userPrompt = chatPrompt.value.trim()
+  chatPrompt.value = ''
+  chatMessages.value.push({
+    localId: `user-${Date.now()}`,
+    role: 'user',
+    content: userPrompt,
+    time: new Date().toLocaleTimeString().slice(0, 5),
+  })
+  chatStreaming.value = true
+  streamStatus.value = ''
+  streamedReply.value = ''
+  actionResults.value = []
+  scrollToBottom()
+
   try {
-    // 模拟大模型思考的真实延迟
-    await new Promise(r => setTimeout(r, 1500))
-    
-    const current = projectStore.currentProject
+    await streamAiChat(
+      route.params.id as string,
+      {
+        prompt: userPrompt,
+        route_name: String(route.name || ''),
+        route_path: route.path,
+        route_params: route.params,
+        query: route.query,
+        page_context: {
+          ...aiStore.pageContext,
+          currentUserId: userStore.user?.id,
+        },
+        auto_execute: true,
+      },
+      {
+        onStatus(payload) {
+          streamStatus.value = payload.message
+        },
+        onChunk(payload) {
+          streamedReply.value += payload.content || ''
+          scrollToBottom()
+        },
+        onAction(payload) {
+          actionResults.value = [...actionResults.value, payload]
+        },
+        async onDone(payload) {
+          chatMessages.value.push({
+            localId: `assistant-${Date.now()}`,
+            role: 'assistant',
+            content: payload.reply || streamedReply.value,
+            time: new Date().toLocaleTimeString().slice(0, 5),
+            actions: payload.actions || [],
+          })
+          window.dispatchEvent(new CustomEvent('teamflow-ai-refresh', { detail: payload.action_results || [] }))
+          for (const item of payload.action_results || []) {
+            if (item.status === 'ok' && ['navigate_page', 'open_task', 'open_document', 'open_file'].includes(item.type)) {
+              await applyUiAction(item)
+            }
+          }
+          chatStreaming.value = false
+          streamedReply.value = ''
+          streamStatus.value = ''
+          await loadConversation()
+        },
+        onError(payload) {
+          chatStreaming.value = false
+          streamedReply.value = ''
+          streamStatus.value = ''
+          ElMessage.error(payload.message || 'AI 处理失败')
+        },
+      },
+    )
+  } catch (error: any) {
+    chatStreaming.value = false
+    streamedReply.value = ''
+    streamStatus.value = ''
+    ElMessage.error(error?.message || 'AI 对话失败')
+  }
+}
+
+const generatePlan = async () => {
+  planningLoading.value = true
+  try {
     const { data } = await aiApi.planning({
-      project_id: Number(projectId.value),
-      project_name: current?.name || '课设项目',
-      deadline: current?.due_date || '2024-06-30',
-      tech_stack: 'Vue 3, TypeScript, FastAPI, SQLite',
-      members: [
-        { name: '张三', role: '组长' },
-        { name: '李四', role: '后端开发' },
-        { name: '王五', role: '前端开发' },
-        { name: '赵六', role: '数据库设计' },
-        { name: '孙七', role: '文档负责人' },
-      ],
-      user_prompt: userPrompt
+      project_id: Number(route.params.id),
+      project_name: projectStore.currentProject?.name || '当前项目',
+      user_prompt: chatPrompt.value.trim() || '请结合当前项目数据生成一版可执行任务规划。',
     })
-    
-    result.value = data.result
     suggestionId.value = data.id
-    chatHistory.value.push({ role: 'assistant', content: '已为您深度拆解当前阶段任务，并生成里程碑建议与风险提示，请查阅右侧面板。' })
-  } catch (err) {
-    chatHistory.value.push({ role: 'assistant', content: '抱歉，连接 AI 引擎失败，请检查网络或后端服务。' })
+    planResult.value = data.result
+    ElMessage.success('AI 任务规划已生成')
   } finally {
-    isGenerating.value = false
+    planningLoading.value = false
   }
 }
 
@@ -148,228 +362,341 @@ const confirmPlan = async () => {
   if (!suggestionId.value) return
   await aiApi.confirm(suggestionId.value)
   ElMessage.success('AI 规划已写入项目')
+  window.dispatchEvent(new CustomEvent('teamflow-ai-refresh', { detail: [{ type: 'create_task', status: 'ok' }] }))
 }
 
-const weeklyReport = async () => {
-  const { data } = await aiApi.weeklyReport(projectId.value)
-  ElMessage.success(data.content)
+const generateWeeklyReport = async () => {
+  reportLoading.value = true
+  try {
+    const { data } = await aiApi.weeklyReport(route.params.id as string)
+    weeklyReport.value = data.content
+    ElMessage.success('AI 周报已生成')
+  } finally {
+    reportLoading.value = false
+  }
 }
 
+onMounted(async () => {
+  aiStore.mergePageContext({ workspace: 'ai-workbench' })
+  await loadConversation()
+})
 </script>
 
 <style scoped>
 .ai-page {
-  display: grid;
-  height: 100%;
-  min-height: 0;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
-  grid-template-columns: 1fr 320px;
 }
 
 .ai-main {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  min-height: 0;
 }
 
-.ai-chat,
-.ai-result,
-.ai-side,
-.inner-card {
-  padding: 18px;
+.hero-card,
+.chat-panel,
+.context-panel,
+.result-panel {
+  padding: 20px;
 }
 
-.ai-chat,
-.ai-result,
-.ai-side {
-  min-height: 0;
-}
-
-.ai-result,
-.inner-card {
+.hero-card {
   display: flex;
-  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  background:
+    radial-gradient(circle at top right, rgba(29, 78, 216, 0.14), transparent 26%),
+    radial-gradient(circle at bottom left, rgba(13, 148, 136, 0.1), transparent 20%),
+    linear-gradient(180deg, #fbfdff 0%, #eff8f7 100%);
 }
 
-.ai-result {
-  flex: 1;
-  overflow: hidden;
+.hero-kicker {
+  margin-bottom: 10px;
+  color: var(--ai-cobalt);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.result-scroll {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-  overflow: auto;
-}
-
-.chat-bubbles {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin: 18px 0;
-}
-
-.bubble {
-  padding: 14px 16px;
-  border-radius: 16px;
-}
-
-.bubble.assistant {
-  background: #f8fafc;
-  align-self: flex-start;
-  border-bottom-left-radius: 4px;
-}
-
-.bubble.user {
-  background: linear-gradient(180deg, #eef4ff 0%, #f7fbff 100%);
-  align-self: flex-end;
-  border-bottom-right-radius: 4px;
-}
-
-.bubble.typing {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  height: 48px;
-}
-
-.bubble.typing span {
-  display: block;
-  width: 6px;
-  height: 6px;
-  background: #cbd5e1;
-  border-radius: 50%;
-  animation: typingBounce 1.4s infinite ease-in-out both;
-}
-
-.bubble.typing span:nth-child(1) { animation-delay: -0.32s; }
-.bubble.typing span:nth-child(2) { animation-delay: -0.16s; }
-
-@keyframes typingBounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
-}
-
-.panel-header,
-.editor-actions {
+.hero-actions,
+.panel-head,
+.composer-bar,
+.bubble-head,
+.result-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.ai-chat-grid,
+.result-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1.45fr 0.95fr;
+}
+
+.chat-panel,
+.context-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ai-skills-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: -4px;
+}
+
+.skill-card {
+  padding: 18px 20px;
+  border-radius: 16px;
+  cursor: pointer;
+  color: white;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.skill-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.skill-icon {
+  font-size: 26px;
+  margin-bottom: 10px;
+}
+
+.skill-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.skill-desc {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.skill-card.pink { background: linear-gradient(135deg, #F472B6 0%, #DB2777 100%); }
+.skill-card.purple { background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%); }
+.skill-card.cyan { background: linear-gradient(135deg, #22D3EE 0%, #0891B2 100%); }
+.skill-card.indigo { background: linear-gradient(135deg, #818CF8 0%, #4F46E5 100%); }
+
+.chat-list {
+  display: flex;
+  min-height: 420px;
+  max-height: 620px;
+  flex-direction: column;
+  gap: 20px;
+  overflow: auto;
+  padding: 20px;
+  background: #F8FAFC;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  scroll-behavior: smooth;
+}
+
+.chat-bubble {
+  display: flex;
+  flex-direction: column;
+  max-width: 80%;
+  padding: 16px 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+
+.chat-bubble.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+  color: #FFFFFF;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble.assistant {
+  align-self: flex-start;
+  background: #FFFFFF;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-bubble.streaming {
+  border: 1px dashed rgba(99, 102, 241, 0.4);
+}
+
+.bubble-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.bubble-copy,
+.result-summary,
+.report-copy {
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+.ai-composer-wrapper {
+  background: #fff;
+  border-radius: 20px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  border: 1px solid rgba(15,23,42,0.05);
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-composer-wrapper:focus-within {
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.ai-composer-wrapper :deep(.el-textarea__inner) {
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
+  resize: none;
+  font-size: 15px;
+  background: transparent;
+  color: var(--text);
+}
+
+.context-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.context-card {
+  padding: 14px;
+  border: 1px solid rgba(29, 78, 216, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.context-card label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.side-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quick-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.quick-card {
+  padding: 12px 14px;
+  border: 1px solid rgba(29, 78, 216, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ai-ink);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+}
+
+.result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.result-row {
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.result-row:last-child {
+  border-bottom: 0;
 }
 
 .phase-track {
   display: grid;
   gap: 12px;
   margin: 18px 0;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
 
-.phase-node {
-  text-align: center;
+.phase-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid rgba(29, 78, 216, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.88);
 }
 
-.phase-index {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  margin: 0 auto 10px;
-  border: 2px solid #4f46e5;
-  border-radius: 50%;
-  place-items: center;
-  color: var(--primary);
+.phase-step {
+  color: var(--ai-cobalt);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.action-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(13, 148, 136, 0.12);
+  color: #0f766e;
+  font-size: 12px;
   font-weight: 700;
 }
 
-.ai-section-grid {
-  margin-top: 18px;
-  align-items: stretch;
-}
-
-.inner-card {
-  min-height: 260px;
-  overflow: hidden;
-}
-
-.suggestion-list {
-  flex: 1;
-  margin: 14px 0 0;
-  padding-left: 20px;
-  overflow: auto;
-}
-
-.suggestion-list li + li {
-  margin-top: 10px;
-}
-
-.risk-table-wrap {
-  flex: 1;
-  min-height: 0;
-  margin-top: 12px;
-  overflow: auto;
-}
-
-.repo-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.repo-item label {
-  color: var(--text-muted);
-}
-
-.side-gap {
-  margin-top: 24px;
-}
-
-.quick-grid {
-  display: grid;
-  gap: 12px;
-  margin-top: 14px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.quick-card,
-.history-item {
-  padding: 14px;
-  border: 1px solid #eef2ff;
-  border-radius: 14px;
-}
-
-.history-item + .history-item {
-  margin-top: 10px;
-}
-
-.ai-side {
-  overflow: auto;
-}
-
 @media (max-width: 1200px) {
-  .ai-page,
-  .phase-track,
-  .ai-section-grid {
+  .ai-chat-grid,
+  .result-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .panel-header,
-  .editor-actions {
+  .hero-card,
+  .hero-actions,
+  .panel-head,
+  .composer-bar {
     align-items: flex-start;
-    gap: 10px;
     flex-direction: column;
   }
 
+  .context-grid,
   .quick-grid {
     grid-template-columns: 1fr;
   }
 
-  .phase-track {
-    gap: 10px;
+  .chat-bubble.user,
+  .chat-bubble.assistant {
+    margin: 0;
   }
 }
 </style>

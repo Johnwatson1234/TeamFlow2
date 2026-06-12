@@ -42,7 +42,7 @@
       </header>
 
       <div class="list-layout">
-        <aside class="list-sidebar teamflow-card">
+        <aside class="list-sidebar dark-sidebar">
           <button
             v-for="item in scopeItems"
             :key="item.key"
@@ -50,6 +50,7 @@
             type="button"
             @click="scopeFilter = item.key"
           >
+            <span class="dot" :style="{ background: item.color }"></span>
             {{ item.label }}
           </button>
           <div class="side-section-title">项目分类</div>
@@ -60,6 +61,7 @@
             type="button"
             @click="categoryFilter = item.value"
           >
+            <span class="dot" :style="{ background: item.color }"></span>
             {{ item.label }}
           </button>
           <div class="sidebar-note">
@@ -152,9 +154,12 @@
                   <div class="tiny-muted" style="margin-top: 2px;">{{ row.updated_by }} 更新</div>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="120" fixed="right" align="right">
+              <el-table-column label="操作" width="140" fixed="right" align="right">
                 <template #default="{ row }">
-                  <el-button plain type="primary" @click="router.push(`/projects/${row.id}`)">进入</el-button>
+                  <button class="project-enter-btn" @click="router.push(`/projects/${row.id}`)">
+                    进入空间
+                    <span class="btn-arrow">→</span>
+                  </button>
                 </template>
               </el-table-column>
             </el-table>
@@ -242,19 +247,19 @@ const navItems: Array<{ key: WorkspaceSection; label: string }> = [
   { key: 'contribution', label: '数据分析' },
 ]
 
-const scopeItems: Array<{ key: ScopeFilter; label: string }> = [
-  { key: 'all', label: '我的项目' },
-  { key: 'joined', label: '我参与的项目' },
-  { key: 'created', label: '我创建的项目' },
-  { key: 'archived', label: '归档项目' },
+const scopeItems: Array<{ key: ScopeFilter; label: string; color: string }> = [
+  { key: 'all', label: '我的项目', color: '#6366F1' },
+  { key: 'joined', label: '我参与的项目', color: '#10B981' },
+  { key: 'created', label: '我创建的项目', color: '#F59E0B' },
+  { key: 'archived', label: '归档项目', color: '#6B7280' },
 ]
 
 const categoryItems = [
-  { value: '', label: '全部项目' },
-  { value: '课程设计', label: '课程设计' },
-  { value: '竞赛项目', label: '竞赛项目' },
-  { value: '科研项目', label: '科研项目' },
-  { value: '其他项目', label: '其他项目' },
+  { value: '', label: '全部项目', color: '#8B5CF6' },
+  { value: '课程设计', label: '课程设计', color: '#3B82F6' },
+  { value: '竞赛项目', label: '竞赛项目', color: '#F43F5E' },
+  { value: '科研项目', label: '科研项目', color: '#06B6D4' },
+  { value: '其他项目', label: '其他项目', color: '#A855F7' },
 ]
 
 const router = useRouter()
@@ -527,42 +532,123 @@ onMounted(load)
   padding: 18px 14px;
 }
 
+.dark-sidebar {
+  background: var(--sidebar-bg); /* Matches the dark indigo theme exactly */
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+  border: 1px solid var(--sidebar-border);
+}
+
 .menu-item,
 .tag-item {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
   padding: 12px 14px;
   border: 0;
-  border-radius: 12px;
+  border-left: 3px solid transparent;
+  border-radius: 0 12px 12px 0;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--sidebar-text);
   cursor: pointer;
   font: inherit;
   text-align: left;
+  transition: all 0.2s;
+  margin-bottom: 4px;
+  opacity: 0.8;
+}
+
+.menu-item .dot,
+.tag-item .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 12px;
+  opacity: 0.8;
+  transition: all 0.2s;
+}
+
+.menu-item:hover,
+.tag-item:hover {
+  background: var(--sidebar-item-hover);
+  color: var(--sidebar-text-active);
+  opacity: 1;
 }
 
 .menu-item.active,
-.menu-item:hover,
-.tag-item.active,
-.tag-item:hover {
-  background: rgba(79, 70, 229, 0.08);
-  color: var(--primary);
+.tag-item.active {
+  background: var(--sidebar-item-active-bg);
+  border-left: 3px solid var(--primary-light);
+  color: var(--sidebar-text-active);
   font-weight: 700;
+  opacity: 1;
+}
+
+.menu-item.active .dot,
+.tag-item.active .dot {
+  opacity: 1;
+  box-shadow: 0 0 8px currentColor;
+  transform: scale(1.2);
 }
 
 .side-section-title {
   margin: 18px 0 10px;
   padding: 14px 10px 0;
-  border-top: 1px solid #e8edf7;
-  color: var(--text);
+  border-top: 1px solid var(--sidebar-border);
+  color: var(--sidebar-text);
+  opacity: 0.7;
   font-weight: 700;
+  font-size: 13px;
 }
 
 .sidebar-note {
   margin-top: 26px;
   padding: 18px 16px;
   border-radius: 16px;
-  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--sidebar-border);
+}
+
+.sidebar-note .section-title {
+  color: var(--sidebar-text-active);
+  margin-bottom: 6px;
+}
+
+.sidebar-note .tiny-muted {
+  color: var(--sidebar-text);
+  opacity: 0.8;
+}
+
+.project-enter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(99, 102, 241, 0.12) 100%);
+  color: var(--primary);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.project-enter-btn:hover {
+  background: linear-gradient(135deg, var(--primary) 0%, #8B5CF6 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  transform: translateY(-2px);
+}
+
+.btn-arrow {
+  transition: transform 0.2s;
+}
+
+.project-enter-btn:hover .btn-arrow {
+  transform: translateX(3px);
 }
 
 .list-main {

@@ -28,17 +28,14 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 LLM_API_KEY = (
     os.getenv("TEAMFLOW_LLM_API_KEY")
-    or os.getenv("BIGMODEL_API_KEY")
     or ""
 ).strip()
 LLM_BASE_URL = (
     os.getenv("TEAMFLOW_LLM_BASE_URL")
-    or os.getenv("BIGMODEL_BASE_URL")
-    or "https://open.bigmodel.cn/api/paas/v4"
+    or "https://token-plan-cn.xiaomimimo.com/v1"
 ).strip()
 LLM_MODEL = (
     os.getenv("TEAMFLOW_LLM_MODEL")
-    or os.getenv("BIGMODEL_MODEL")
-    or "glm-4.7-flash"
+    or "mimo-v2.5-pro"
 ).strip()
 LLM_TIMEOUT_SECONDS = float(os.getenv("TEAMFLOW_LLM_TIMEOUT_SECONDS", "20"))

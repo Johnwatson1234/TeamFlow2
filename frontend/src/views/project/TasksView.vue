@@ -107,7 +107,7 @@
         <router-link class="action-link" :to="`/projects/${projectId}/milestones`">查看全部里程碑</router-link>
       </div>
       <div class="milestone-track">
-        <div v-for="item in milestones" :key="item.id" class="milestone-item">
+        <div v-for="(item, index) in milestones" :key="item.id" class="milestone-item dark" :style="{ background: getMilestoneBg(index) }">
           <div class="milestone-name">{{ item.name }}</div>
           <div class="milestone-status">{{ item.status }}</div>
           <div class="milestone-date">{{ item.due_date }}</div>
@@ -152,13 +152,15 @@
 
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { projectApi, taskApi } from '@/api'
+import { useAiStore } from '@/stores/ai'
 
 const route = useRoute()
 const router = useRouter()
+const aiStore = useAiStore()
 const projectId = computed(() => route.params.id as string)
 const loading = ref(false)
 const tasks = ref<any[]>([])
@@ -186,6 +188,20 @@ const editingTask = reactive<any>({
   related_document: '',
   related_commit: '',
 })
+
+const getMilestoneBg = (index: number) => {
+  const backgrounds = [
+    'linear-gradient(135deg, #F472B6 0%, #DB2777 100%)',
+    'linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)',
+    'linear-gradient(135deg, #22D3EE 0%, #0891B2 100%)',
+    'linear-gradient(135deg, #818CF8 0%, #4F46E5 100%)',
+    'linear-gradient(135deg, #34D399 0%, #059669 100%)',
+    'linear-gradient(135deg, #FB923C 0%, #EA580C 100%)',
+    'linear-gradient(135deg, #FBBF24 0%, #D97706 100%)',
+    'linear-gradient(135deg, #FB7185 0%, #E11D48 100%)',
+  ]
+  return backgrounds[index % backgrounds.length]
+}
 
 const columns = [
   { key: 'TODO', label: '待处理' },
@@ -224,8 +240,10 @@ const load = async () => {
     tasks.value = taskRes.data
     milestones.value = milestoneRes.data
     members.value = memberRes.data
-    selectedTask.value = tasks.value[3] || tasks.value[0]
+    const queryTaskId = Number(route.query.taskId || 0)
+    selectedTask.value = tasks.value.find((item) => item.id === queryTaskId) || tasks.value[3] || tasks.value[0]
     if (selectedTask.value) await loadActivities(selectedTask.value.id)
+    syncAiContext()
   } finally {
     loading.value = false
   }
@@ -240,6 +258,18 @@ const selectTask = async (task: any) => {
   selectedTask.value = task
   detailOpen.value = true
   await loadActivities(task.id)
+  syncAiContext()
+}
+
+const syncAiContext = () => {
+  aiStore.setPageContext({
+    selectedTaskId: selectedTask.value?.id || null,
+    filters: JSON.stringify(filters),
+  })
+}
+
+const handleAiRefresh = async () => {
+  await load()
 }
 
 const openCreate = (status = 'TODO') => {
@@ -301,7 +331,16 @@ const openRelated = async (type: 'requirement' | 'document' | 'commit') => {
   ElMessage.info(`关联需求：${selectedTask.value.related_requirement}`)
 }
 
-onMounted(load)
+watch(filters, syncAiContext, { deep: true })
+
+onMounted(() => {
+  window.addEventListener('teamflow-ai-refresh', handleAiRefresh as EventListener)
+  load()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('teamflow-ai-refresh', handleAiRefresh as EventListener)
+})
 </script>
 
 <style scoped>
@@ -486,7 +525,7 @@ onMounted(load)
 .milestone-item {
   padding: 14px;
   border-radius: 14px;
-  background: #f8faff;
+  /* background dynamically applied via inline style */
 }
 
 .milestone-name {
